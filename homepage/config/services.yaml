@@ -1,8 +1,9 @@
 # services.yaml — tes tuiles, regroupées par catégorie.
-# Remplace simplement les adresses IP:port par les tiennes.
-# Pour un widget "live", décommente le bloc widget: et mets ta clé/token.
-# Liste des icônes : https://github.com/walkxcode/dashboard-icons
-# Liste des widgets : https://gethomepage.dev/widgets/
+# Pour AJOUTER un service : copie un bloc et change nom / icon / href.
+# Pour EN RETIRER un : supprime son bloc (4 lignes).
+# Remplace les adresses IP:port par les tiennes.
+# Icônes dispo : https://github.com/walkxcode/dashboard-icons
+# Widgets dispo : https://gethomepage.dev/widgets/
 
 - Infrastructure:
     - Proxmox:
@@ -12,43 +13,69 @@
         # widget:
         #   type: proxmox
         #   url: https://192.168.0.1:8006
-        #   username: homepage@pam!token   # token API Proxmox
+        #   username: homepage@pam!token
         #   password: xxxxxxxx-xxxx-xxxx-xxxx
         #   node: pve
-
     - Portainer:
         icon: portainer.png
         href: https://192.168.0.10:9443/
-        description: Gestion des conteneurs Docker
+        description: Conteneurs Docker
+    - Proxmox Backup:
+        icon: proxmox-backup-server.png
+        href: https://192.168.0.2:8007/
+        description: Sauvegardes
 
 - Médias:
     - Jellyfin:
         icon: jellyfin.png
         href: http://192.168.0.20:8096/
-        description: Serveur multimédia
+        description: Films & séries
         # widget:
         #   type: jellyfin
         #   url: http://192.168.0.20:8096
         #   key: xxxxxxxxxxxxxxxxxxxx
+    - Sonarr:
+        icon: sonarr.png
+        href: http://192.168.0.21:8989/
+        description: Séries
+    - Radarr:
+        icon: radarr.png
+        href: http://192.168.0.22:7878/
+        description: Films
+    - qBittorrent:
+        icon: qbittorrent.png
+        href: http://192.168.0.23:8080/
+        description: Téléchargements
 
 - Outils:
     - Vaultwarden:
         icon: vaultwarden.png
         href: https://192.168.0.30/
-        description: Gestionnaire de mots de passe
-
+        description: Mots de passe
     - Nextcloud:
         icon: nextcloud.png
         href: https://192.168.0.31/
         description: Fichiers & synchro
+    - Gitea:
+        icon: gitea.png
+        href: http://192.168.0.32:3000/
+        description: Dépôts Git
 
 - Réseau:
     - AdGuard Home:
         icon: adguard-home.png
         href: http://192.168.0.40/
-        description: DNS & filtrage des pubs
+        description: DNS & filtrage
         # widget:
         #   type: adguard
         #   url: http://192.168.0.40
         #   username: admin
         #   password: xxxxxxxx
+    - Nginx Proxy Manager:
+        icon: nginx-proxy-manager.png
+        href: http://192.168.0.41:81/
+        description: Reverse proxy
+    - Uptime Kuma:
+        icon: uptime-kuma.png
+        href: http://192.168.0.42:3001/
+        description: Supervision
