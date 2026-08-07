@@ -1,0 +1,4 @@
+# Secrets locaux au conteneur — JAMAIS sur GitHub (dépôt public)
+.env
+*.env
+homepage/config/logs/
