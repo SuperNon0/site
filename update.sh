@@ -35,6 +35,12 @@ mkdir -p "$CONFIG_DST"
 cp -f "$SITE_DIR"/homepage/config/*.yaml "$CONFIG_DST"/ 2>/dev/null || true
 cp -f "$SITE_DIR"/homepage/config/*.css  "$CONFIG_DST"/ 2>/dev/null || true
 
+# icônes / logos custom (dossier icons/) -> /app/config/icons
+if [ -d "$SITE_DIR/homepage/config/icons" ]; then
+  mkdir -p "$CONFIG_DST/icons"
+  cp -f "$SITE_DIR"/homepage/config/icons/* "$CONFIG_DST"/icons/ 2>/dev/null || true
+fi
+
 # recharge Homepage
 docker restart homepage >/dev/null 2>&1 || true
 
