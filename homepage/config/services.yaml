@@ -37,6 +37,11 @@
         icon: adguard-home.png
         href: https://adguard.super-nono.cc/
         description: DNS & filtrage · 192.168.0.___
+        widget:
+          type: adguard
+          url: https://adguard.super-nono.cc
+          username: "{{HOMEPAGE_VAR_ADGUARD_USER}}"
+          password: "{{HOMEPAGE_VAR_ADGUARD_PASSWORD}}"
     - Box / Routeur:
         icon: mdi-router-network
         href: http://192.168.0.254/

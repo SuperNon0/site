@@ -144,7 +144,13 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       - HOMEPAGE_ALLOWED_HOSTS=${CT_IP_ADDR}:${HP_PORT},localhost:${HP_PORT}
+    env_file:
+      - /opt/homepage/config/.env
 COMPOSE
+
+# Fichier de secrets local (jamais sur GitHub) — variables HOMEPAGE_VAR_*
+touch /opt/homepage/config/.env
+chmod 600 /opt/homepage/config/.env
 
 # Config par défaut (uniquement si le dossier est vide)
 if [ -z "\$(ls -A /opt/homepage/config 2>/dev/null)" ]; then
