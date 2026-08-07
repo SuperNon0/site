@@ -1,0 +1,29 @@
+- greeting:
+    text_size: xl
+    text: Bienvenue 👋
+
+- resources:
+    label: Système
+    cpu: true
+    memory: true
+    disk: /
+    expanded: true
+
+- search:
+    provider: duckduckgo
+    target: _blank
+
+- datetime:
+    text_size: xl
+    format:
+      dateStyle: full
+      timeStyle: short
+      hourCycle: h23
+
+# Météo — remplace latitude/longitude par ta position
+- openmeteo:
+    label: Météo
+    latitude: 48.8566
+    longitude: 2.3522
+    units: metric
+    cache: 5

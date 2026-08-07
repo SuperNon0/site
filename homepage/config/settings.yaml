@@ -1,0 +1,30 @@
+title: Mon Homelab
+theme: dark
+color: slate
+language: fr
+headerStyle: boxed
+hideVersion: true
+target: _blank
+
+layout:
+  Infrastructure:
+    style: row
+    columns: 4
+    icon: mdi-server
+  Médias:
+    style: row
+    columns: 4
+    icon: mdi-play-circle
+  Outils:
+    style: row
+    columns: 4
+    icon: mdi-tools
+  Réseau:
+    style: row
+    columns: 4
+    icon: mdi-lan
+
+quicklaunch:
+  searchDescriptions: true
+  hideInternetSearch: false
+  provider: duckduckgo

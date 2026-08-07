@@ -1,0 +1,54 @@
+# services.yaml — tes tuiles, regroupées par catégorie.
+# Remplace simplement les adresses IP:port par les tiennes.
+# Pour un widget "live", décommente le bloc widget: et mets ta clé/token.
+# Liste des icônes : https://github.com/walkxcode/dashboard-icons
+# Liste des widgets : https://gethomepage.dev/widgets/
+
+- Infrastructure:
+    - Proxmox:
+        icon: proxmox.png
+        href: https://192.168.0.1:8006/
+        description: Hyperviseur — VMs & LXC
+        # widget:
+        #   type: proxmox
+        #   url: https://192.168.0.1:8006
+        #   username: homepage@pam!token   # token API Proxmox
+        #   password: xxxxxxxx-xxxx-xxxx-xxxx
+        #   node: pve
+
+    - Portainer:
+        icon: portainer.png
+        href: https://192.168.0.10:9443/
+        description: Gestion des conteneurs Docker
+
+- Médias:
+    - Jellyfin:
+        icon: jellyfin.png
+        href: http://192.168.0.20:8096/
+        description: Serveur multimédia
+        # widget:
+        #   type: jellyfin
+        #   url: http://192.168.0.20:8096
+        #   key: xxxxxxxxxxxxxxxxxxxx
+
+- Outils:
+    - Vaultwarden:
+        icon: vaultwarden.png
+        href: https://192.168.0.30/
+        description: Gestionnaire de mots de passe
+
+    - Nextcloud:
+        icon: nextcloud.png
+        href: https://192.168.0.31/
+        description: Fichiers & synchro
+
+- Réseau:
+    - AdGuard Home:
+        icon: adguard-home.png
+        href: http://192.168.0.40/
+        description: DNS & filtrage des pubs
+        # widget:
+        #   type: adguard
+        #   url: http://192.168.0.40
+        #   username: admin
+        #   password: xxxxxxxx

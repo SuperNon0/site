@@ -1,0 +1,15 @@
+/* custom.css — retouches de design (optionnel).
+   Homepage l'applique automatiquement. Décommente/ajuste à volonté. */
+
+/* Coins plus arrondis + léger effet de profondeur sur les tuiles */
+#services .service-card,
+.service-card {
+  border-radius: 14px;
+}
+
+/* Titres de groupes un peu plus marqués */
+/*
+h2 {
+  letter-spacing: 0.02em;
+}
+*/

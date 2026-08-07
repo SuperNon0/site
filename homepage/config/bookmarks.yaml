@@ -1,0 +1,23 @@
+- Administration:
+    - Proxmox:
+        - abbr: PVE
+          href: https://192.168.0.1:8006/
+    - Box / Routeur:
+        - abbr: RT
+          href: http://192.168.0.254/
+
+- Développement:
+    - GitHub:
+        - abbr: GH
+          href: https://github.com/
+    - Doc Homepage:
+        - abbr: HP
+          href: https://gethomepage.dev/
+
+- Veille:
+    - r/selfhosted:
+        - abbr: RS
+          href: https://reddit.com/r/selfhosted/
+    - r/homelab:
+        - abbr: HL
+          href: https://reddit.com/r/homelab/
