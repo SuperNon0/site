@@ -1,23 +1,28 @@
+# bookmarks.yaml — raccourcis (liens simples, sans widget).
+
+- GitHub:
+    - Mon profil:
+        - abbr: GH
+          href: https://github.com/SuperNon0
+    - Dépôt site / Homepage:
+        - abbr: HP
+          href: https://github.com/SuperNon0/site
+    - Mes dépôts:
+        - abbr: RE
+          href: https://github.com/SuperNon0?tab=repositories
+
 - Administration:
     - Proxmox:
         - abbr: PVE
-          href: https://192.168.0.1:8006/
-    - Box / Routeur:
-        - abbr: RT
-          href: http://192.168.0.254/
-
-- Développement:
-    - GitHub:
-        - abbr: GH
-          href: https://github.com/
-    - Doc Homepage:
-        - abbr: HP
-          href: https://gethomepage.dev/
+          href: https://proxmox.super-nono.cc/
+    - Cloudflare:
+        - abbr: CF
+          href: https://dash.cloudflare.com/
 
 - Veille:
     - r/selfhosted:
         - abbr: RS
           href: https://reddit.com/r/selfhosted/
-    - r/homelab:
-        - abbr: HL
-          href: https://reddit.com/r/homelab/
+    - Doc Homepage:
+        - abbr: DH
+          href: https://gethomepage.dev/

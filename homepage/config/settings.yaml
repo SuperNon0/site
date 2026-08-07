@@ -7,22 +7,26 @@ hideVersion: true
 target: _blank
 
 layout:
-  Infrastructure:
+  Administration:
     style: row
     columns: 4
     icon: mdi-server
-  Médias:
+  Domotique & Réseau:
+    style: row
+    columns: 4
+    icon: mdi-home-automation
+  Automatisation:
+    style: row
+    columns: 4
+    icon: mdi-cog-sync
+  Médias & Jeux:
     style: row
     columns: 4
     icon: mdi-play-circle
   Outils:
     style: row
     columns: 4
-    icon: mdi-tools
-  Réseau:
-    style: row
-    columns: 4
-    icon: mdi-lan
+    icon: mdi-toolbox
 
 quicklaunch:
   searchDescriptions: true

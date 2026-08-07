@@ -1,81 +1,88 @@
-# services.yaml — tes tuiles, regroupées par catégorie.
-# Pour AJOUTER un service : copie un bloc et change nom / icon / href.
-# Pour EN RETIRER un : supprime son bloc (4 lignes).
-# Remplace les adresses IP:port par les tiennes.
-# Icônes dispo : https://github.com/walkxcode/dashboard-icons
-# Widgets dispo : https://gethomepage.dev/widgets/
+# services.yaml — tes outils, d'après tes conteneurs Proxmox.
+#
+# ⚠️ URL À VÉRIFIER : j'ai supposé le modèle "nom.super-nono.cc" (comme ton
+#    Proxmox). Corrige chaque href: avec la vraie adresse (domaine OU IP:port).
+#
+# Ajouter un service = copier un bloc. Le retirer = supprimer son bloc.
+# Icônes : https://github.com/walkxcode/dashboard-icons  (sinon "mdi-xxx")
+# Widgets live : https://gethomepage.dev/widgets/
 
-- Infrastructure:
+- Administration:
     - Proxmox:
         icon: proxmox.png
-        href: https://192.168.0.1:8006/
-        description: Hyperviseur — VMs & LXC
+        href: https://proxmox.super-nono.cc/
+        description: Hyperviseur — node pve2
         # widget:
         #   type: proxmox
-        #   url: https://192.168.0.1:8006
+        #   url: https://proxmox.super-nono.cc
         #   username: homepage@pam!token
-        #   password: xxxxxxxx-xxxx-xxxx-xxxx
-        #   node: pve
+        #   password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
+        #   node: pve2
     - Portainer:
         icon: portainer.png
-        href: https://192.168.0.10:9443/
-        description: Conteneurs Docker
-    - Proxmox Backup:
-        icon: proxmox-backup-server.png
-        href: https://192.168.0.2:8007/
-        description: Sauvegardes
+        href: https://portainer.super-nono.cc/
+        description: Gestion Docker
+    - Debian (base):
+        icon: debian.png
+        href: "#"
+        description: LXC 100 — machine de base
 
-- Médias:
-    - Jellyfin:
-        icon: jellyfin.png
-        href: http://192.168.0.20:8096/
-        description: Films & séries
+- Domotique & Réseau:
+    - Home Assistant:
+        icon: home-assistant.png
+        href: https://home.super-nono.cc/
+        description: Domotique
         # widget:
-        #   type: jellyfin
-        #   url: http://192.168.0.20:8096
-        #   key: xxxxxxxxxxxxxxxxxxxx
-    - Sonarr:
-        icon: sonarr.png
-        href: http://192.168.0.21:8989/
-        description: Séries
-    - Radarr:
-        icon: radarr.png
-        href: http://192.168.0.22:7878/
-        description: Films
-    - qBittorrent:
-        icon: qbittorrent.png
-        href: http://192.168.0.23:8080/
-        description: Téléchargements
-
-- Outils:
-    - Vaultwarden:
-        icon: vaultwarden.png
-        href: https://192.168.0.30/
-        description: Mots de passe
-    - Nextcloud:
-        icon: nextcloud.png
-        href: https://192.168.0.31/
-        description: Fichiers & synchro
-    - Gitea:
-        icon: gitea.png
-        href: http://192.168.0.32:3000/
-        description: Dépôts Git
-
-- Réseau:
+        #   type: homeassistant
+        #   url: https://home.super-nono.cc
+        #   key: "{{HOMEPAGE_VAR_HASS_TOKEN}}"
     - AdGuard Home:
         icon: adguard-home.png
-        href: http://192.168.0.40/
-        description: DNS & filtrage
-        # widget:
-        #   type: adguard
-        #   url: http://192.168.0.40
-        #   username: admin
-        #   password: xxxxxxxx
-    - Nginx Proxy Manager:
-        icon: nginx-proxy-manager.png
-        href: http://192.168.0.41:81/
-        description: Reverse proxy
-    - Uptime Kuma:
-        icon: uptime-kuma.png
-        href: http://192.168.0.42:3001/
-        description: Supervision
+        href: https://adguard.super-nono.cc/
+        description: DNS & filtrage des pubs
+    - Box / Routeur:
+        icon: mdi-router-network
+        href: http://192.168.0.254/
+        description: Accès réseau local
+
+- Automatisation:
+    - n8n:
+        icon: n8n.png
+        href: https://n8n.super-nono.cc/
+        description: Automatisations — LXC 101
+    - DiscoPanel:
+        icon: mdi-discord
+        href: https://discopanel.super-nono.cc/
+        description: LXC 102
+    - PanelBot:
+        icon: mdi-robot
+        href: https://panelbot.super-nono.cc/
+        description: LXC 104
+
+- Médias & Jeux:
+    - Ciné:
+        icon: mdi-movie-open
+        href: https://cine.super-nono.cc/
+        description: LXC 108
+    - Palworld:
+        icon: mdi-gamepad-variant
+        href: "#"
+        description: Serveur de jeu — LXC 107
+
+- Outils:
+    - RecipeLog:
+        icon: mdi-silverware-fork-knife
+        href: https://recipelog.super-nono.cc/
+        description: Recettes — LXC 105
+    - FuelLog:
+        icon: mdi-gas-station
+        href: https://fuellog.super-nono.cc/
+        description: Suivi carburant — LXC 109
+    - BentoPDF:
+        icon: mdi-file-pdf-box
+        href: https://bentopdf.super-nono.cc/
+        description: Outils PDF — LXC 103
+    - MultiOutils:
+        icon: mdi-toolbox
+        href: https://multioutils.super-nono.cc/
+        description: LXC 106
