@@ -1,7 +1,8 @@
 # services.yaml — tes outils, d'après tes conteneurs Proxmox.
 #
-# ⚠️ URL À VÉRIFIER : j'ai supposé le modèle "nom.super-nono.cc" (comme ton
-#    Proxmox). Corrige chaque href: avec la vraie adresse (domaine OU IP:port).
+# ⚠️ À COMPLÉTER :
+#   • href:  → corrige l'URL réelle (domaine ou IP:port) de chaque service.
+#   • description: → remplace "192.168.0.___" par l'IP réelle pour y accéder.
 #
 # Ajouter un service = copier un bloc. Le retirer = supprimer son bloc.
 # Icônes : https://github.com/walkxcode/dashboard-icons  (sinon "mdi-xxx")
@@ -11,27 +12,23 @@
     - Proxmox:
         icon: proxmox.png
         href: https://proxmox.super-nono.cc/
-        description: Hyperviseur — node pve2
+        description: Hyperviseur pve2 · 192.168.0.___
         # widget:
         #   type: proxmox
         #   url: https://proxmox.super-nono.cc
         #   username: homepage@pam!token
         #   password: "{{HOMEPAGE_VAR_PROXMOX_TOKEN}}"
         #   node: pve2
-    - Portainer:
-        icon: portainer.png
-        href: https://portainer.super-nono.cc/
-        description: Gestion Docker
-    - Debian (base):
-        icon: debian.png
-        href: "#"
-        description: LXC 100 — machine de base
+    - Cloudflare (Debian):
+        icon: cloudflare.png
+        href: https://one.dash.cloudflare.com/
+        description: Tunnel Zero Trust · LXC 100 · 192.168.0.___
 
 - Domotique & Réseau:
     - Home Assistant:
         icon: home-assistant.png
         href: https://home.super-nono.cc/
-        description: Domotique
+        description: Domotique · 192.168.0.___
         # widget:
         #   type: homeassistant
         #   url: https://home.super-nono.cc
@@ -39,50 +36,50 @@
     - AdGuard Home:
         icon: adguard-home.png
         href: https://adguard.super-nono.cc/
-        description: DNS & filtrage des pubs
+        description: DNS & filtrage · 192.168.0.___
     - Box / Routeur:
         icon: mdi-router-network
         href: http://192.168.0.254/
-        description: Accès réseau local
+        description: Accès réseau local · 192.168.0.254
 
 - Automatisation:
     - n8n:
         icon: n8n.png
         href: https://n8n.super-nono.cc/
-        description: Automatisations — LXC 101
+        description: Automatisations · LXC 101 · 192.168.0.___
     - DiscoPanel:
         icon: mdi-discord
         href: https://discopanel.super-nono.cc/
-        description: LXC 102
+        description: LXC 102 · 192.168.0.___
     - PanelBot:
         icon: mdi-robot
         href: https://panelbot.super-nono.cc/
-        description: LXC 104
+        description: LXC 104 · 192.168.0.___
 
 - Médias & Jeux:
     - Ciné:
         icon: mdi-movie-open
         href: https://cine.super-nono.cc/
-        description: LXC 108
+        description: LXC 108 · 192.168.0.___
     - Palworld:
         icon: mdi-gamepad-variant
         href: "#"
-        description: Serveur de jeu — LXC 107
+        description: Serveur de jeu · LXC 107 · 192.168.0.___
 
 - Outils:
     - RecipeLog:
         icon: mdi-silverware-fork-knife
         href: https://recipelog.super-nono.cc/
-        description: Recettes — LXC 105
+        description: Recettes · LXC 105 · 192.168.0.___
     - FuelLog:
         icon: mdi-gas-station
         href: https://fuellog.super-nono.cc/
-        description: Suivi carburant — LXC 109
+        description: Suivi carburant · LXC 109 · 192.168.0.___
     - BentoPDF:
         icon: mdi-file-pdf-box
         href: https://bentopdf.super-nono.cc/
-        description: Outils PDF — LXC 103
+        description: Outils PDF · LXC 103 · 192.168.0.___
     - MultiOutils:
         icon: mdi-toolbox
         href: https://multioutils.super-nono.cc/
-        description: LXC 106
+        description: LXC 106 · 192.168.0.___

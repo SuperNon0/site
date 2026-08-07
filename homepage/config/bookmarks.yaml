@@ -1,23 +1,26 @@
 # bookmarks.yaml — raccourcis (liens simples, sans widget).
 
+- Cloudflare:
+    - Zero Trust:
+        - abbr: ZT
+          href: https://one.dash.cloudflare.com/
+    - Tableau de bord:
+        - abbr: CF
+          href: https://dash.cloudflare.com/
+    - Tunnels:
+        - abbr: TN
+          href: https://one.dash.cloudflare.com/?to=/:account/networks/tunnels
+
 - GitHub:
     - Mon profil:
         - abbr: GH
           href: https://github.com/SuperNon0
-    - Dépôt site / Homepage:
+    - Dépôt Homepage:
         - abbr: HP
           href: https://github.com/SuperNon0/site
     - Mes dépôts:
         - abbr: RE
           href: https://github.com/SuperNon0?tab=repositories
-
-- Administration:
-    - Proxmox:
-        - abbr: PVE
-          href: https://proxmox.super-nono.cc/
-    - Cloudflare:
-        - abbr: CF
-          href: https://dash.cloudflare.com/
 
 - Veille:
     - r/selfhosted:

@@ -20,10 +20,10 @@
       timeStyle: short
       hourCycle: h23
 
-# Météo — remplace latitude/longitude par ta position
+# Météo — Le Grau-du-Roi (Gard)
 - openmeteo:
-    label: Météo
-    latitude: 48.8566
-    longitude: 2.3522
+    label: Le Grau-du-Roi
+    latitude: 43.5378
+    longitude: 4.1347
     units: metric
     cache: 5
