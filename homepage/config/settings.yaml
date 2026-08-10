@@ -4,7 +4,9 @@ color: slate
 language: fr
 headerStyle: boxed
 hideVersion: true
-target: _blank
+# _self = le lien remplace la page actuelle (idéal en PWA sur téléphone,
+# le bouton retour ramène au dashboard). _blank = nouvel onglet.
+target: _self
 
 layout:
   Administration:

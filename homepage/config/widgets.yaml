@@ -11,7 +11,7 @@
 
 - search:
     provider: duckduckgo
-    target: _blank
+    target: _self
 
 - datetime:
     text_size: xl
