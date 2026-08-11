@@ -1,0 +1,74 @@
+[
+  {
+    "id": "fuellog",
+    "icon": "⛽",
+    "title": "FuelLog",
+    "desc": "Suivi carburant · stations · précision ODB",
+    "url": "https://fuel.super-nono.cc",
+    "color": "#e43737"
+  },
+  {
+    "id": "salaire",
+    "icon": "💶",
+    "title": "Salaire",
+    "desc": "Calculateur · fiches de paie",
+    "url": "https://salaire.super-nono.cc",
+    "color": "#47e31b"
+  },
+  {
+    "id": "mnxmk0zt",
+    "icon": "📺",
+    "title": "Proxmox",
+    "desc": "Panneaux de configuration",
+    "url": "https://proxmox.super-nono.cc",
+    "color": "#b56912"
+  },
+  {
+    "id": "mnxp3tjd",
+    "icon": "🔗",
+    "title": "n8n",
+    "desc": "Gestionnaires d'automatisation",
+    "url": "https://nnn.super-nono.cc",
+    "color": "#6e0202"
+  },
+  {
+    "id": "mnyd67t5",
+    "icon": "🔧",
+    "title": "DiscoPanel",
+    "desc": "Panel de gestion de serveur MC",
+    "url": "https://mc.super-nono.cc",
+    "color": "#2e703b"
+  },
+  {
+    "id": "mo1ytw8y",
+    "icon": "☎",
+    "title": "BotPanel",
+    "desc": "Gestion des notification et des actions sur discord",
+    "url": "https://botpanel.super-nono.cc",
+    "color": "#151ed4"
+  },
+  {
+    "id": "morq1sva",
+    "icon": "📝",
+    "title": "RecipeLogs",
+    "desc": "Gestionnaire de recettes",
+    "url": "https://recipe.super-nono.cc/",
+    "color": "#a78cfa"
+  },
+  {
+    "id": "moym0sgk",
+    "icon": "📝",
+    "title": "BentoPDF",
+    "desc": "Outils PDF",
+    "url": "https://pdf.super-nono.cc",
+    "color": "#5fa5fa"
+  },
+  {
+    "id": "mri7pviw",
+    "icon": "🛠",
+    "title": "MultiOutils",
+    "desc": "Outils de capture et de clipbords",
+    "url": "https://multioutils.super-nono.cc/",
+    "color": "#4bc40f"
+  }
+]
