@@ -1,4 +1,11 @@
-# Secrets locaux au conteneur — JAMAIS sur GitHub (dépôt public)
-.env
+# Dépendances
+node_modules/
+app/node_modules/
+
+# Données runtime (générées dans le conteneur, jamais versionnées)
+app/data/config.json
+app/data/icons/
+
+# Secrets / environnement
 *.env
-homepage/config/logs/
+.env

@@ -1,0 +1,61 @@
+{
+  "settings": {
+    "title": "super",
+    "titleAccent": "-nono",
+    "subtitle": "Mon hub central",
+    "weather": { "lat": 43.5378, "lon": 4.1347, "label": "Le Grau-du-Roi" }
+  },
+  "categories": [
+    {
+      "id": "infra",
+      "name": "Infrastructure",
+      "sections": [
+        {
+          "id": "serveurs",
+          "name": "Serveurs",
+          "items": [
+            { "id": "proxmox", "type": "app", "icon": { "kind": "emoji", "value": "📺" }, "title": "Proxmox", "desc": "Panneaux de configuration", "url": "https://proxmox.super-nono.cc", "color": "#b56912" }
+          ]
+        },
+        {
+          "id": "automatisation",
+          "name": "Automatisation",
+          "items": [
+            { "id": "n8n", "type": "app", "icon": { "kind": "emoji", "value": "🔗" }, "title": "n8n", "desc": "Gestionnaire d'automatisation", "url": "https://nnn.super-nono.cc", "color": "#6e0202" },
+            { "id": "botpanel", "type": "app", "icon": { "kind": "emoji", "value": "☎️" }, "title": "BotPanel", "desc": "Notifications & actions Discord", "url": "https://botpanel.super-nono.cc", "color": "#151ed4" },
+            { "id": "discopanel", "type": "app", "icon": { "kind": "emoji", "value": "🔧" }, "title": "DiscoPanel", "desc": "Gestion serveur Minecraft", "url": "https://mc.super-nono.cc", "color": "#2e703b" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "perso",
+      "name": "Perso",
+      "sections": [
+        {
+          "id": "mes-apps",
+          "name": "Mes applications",
+          "items": [
+            { "id": "fuellog", "type": "app", "icon": { "kind": "emoji", "value": "⛽" }, "title": "FuelLog", "desc": "Suivi carburant · stations", "url": "https://fuel.super-nono.cc", "color": "#e43737" },
+            { "id": "salaire", "type": "app", "icon": { "kind": "emoji", "value": "💶" }, "title": "Salaire", "desc": "Calculateur · fiches de paie", "url": "https://salaire.super-nono.cc", "color": "#47e31b" },
+            { "id": "recipe", "type": "app", "icon": { "kind": "emoji", "value": "📝" }, "title": "RecipeLogs", "desc": "Gestionnaire de recettes", "url": "https://recipe.super-nono.cc", "color": "#a78cfa" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "outils",
+      "name": "Outils",
+      "sections": [
+        {
+          "id": "utilitaires",
+          "name": "Utilitaires",
+          "items": [
+            { "id": "pdf", "type": "app", "icon": { "kind": "emoji", "value": "📄" }, "title": "BentoPDF", "desc": "Outils PDF", "url": "https://pdf.super-nono.cc", "color": "#5fa5fa" },
+            { "id": "multioutils", "type": "app", "icon": { "kind": "emoji", "value": "🛠️" }, "title": "MultiOutils", "desc": "Capture & presse-papier", "url": "https://multioutils.super-nono.cc", "color": "#4bc40f" }
+          ]
+        }
+      ]
+    }
+  ]
+}

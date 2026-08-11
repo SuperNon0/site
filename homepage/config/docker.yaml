@@ -1,4 +1,0 @@
-# Auto-découverte des conteneurs Docker locaux via leurs labels homepage.*
-# Doc : https://gethomepage.dev/configs/docker/
-my-docker:
-  socket: /var/run/docker.sock
