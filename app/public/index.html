@@ -158,6 +158,9 @@
 
 <div class="adminbar">
   <button class="lnk" id="manage-lnk" onclick="toggleManage()" style="display:none">Gérer</button>
+  <button class="lnk" id="update-lnk" onclick="doUpdate()" style="display:none">↻ MàJ</button>
+  <button class="lnk" id="pass-lnk" onclick="openChangePass()" style="display:none">Mot de passe</button>
+  <button class="lnk" id="logout-lnk" onclick="logout()" style="display:none">Déconnexion</button>
   <button class="lnk" id="login-lnk" onclick="openLogin()">Admin</button>
 </div>
 
@@ -240,6 +243,21 @@
   </div>
 </div>
 
+<!-- ══ MODAL CHANGER MOT DE PASSE ══ -->
+<div class="overlay" id="m-pass" onclick="closeOverlay(event,'m-pass')">
+  <div class="modal">
+    <div class="handle"></div>
+    <div class="modal-title">Changer le mot de passe</div>
+    <div class="field"><label>Mot de passe actuel</label><input type="password" id="p-cur" placeholder="••••••••"></div>
+    <div class="field"><label>Nouveau mot de passe</label><input type="password" id="p-new" placeholder="min. 4 caractères"></div>
+    <div class="field"><label>Confirmer</label><input type="password" id="p-conf" placeholder="••••••••"></div>
+    <div class="row">
+      <button class="btn-cancel" onclick="closeOverlay(null,'m-pass')">Annuler</button>
+      <button class="btn-ok" onclick="doChangePass()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -262,7 +280,7 @@ async function init(){
   render();
   startClock();
   loadWeather();
-  if(token) document.getElementById('manage-lnk').style.display='';
+  if(token) setLogged(true);
 }
 function applySettings(){
   const s = config.settings||{};
@@ -505,11 +523,42 @@ async function doLogin(){
   token=j.token;localStorage.setItem('hub_token',token);
   document.getElementById('f-pass').value='';
   closeOverlay(null,'m-login');
-  document.getElementById('manage-lnk').style.display='';
+  setLogged(true);
   toggleManage();toast('Connecté ✓');
 }
-function logout(){token='';localStorage.removeItem('hub_token');manageMode=false;document.getElementById('manage-lnk').style.display='none';render();}
+function logout(){token='';localStorage.removeItem('hub_token');manageMode=false;setLogged(false);render();}
 function toggleManage(){if(!token){openLogin();return;}manageMode=!manageMode;render();}
+function setLogged(v){
+  ['manage-lnk','update-lnk','pass-lnk','logout-lnk'].forEach(id=>document.getElementById(id).style.display=v?'':'none');
+  document.getElementById('login-lnk').style.display=v?'none':'';
+}
+
+// ─── CHANGER MOT DE PASSE ─────────────────────────────────────────────────────
+function openChangePass(){openOverlay('m-pass');}
+async function doChangePass(){
+  const cur=document.getElementById('p-cur').value,nw=document.getElementById('p-new').value,cf=document.getElementById('p-conf').value;
+  if(nw.length<4){toast('Nouveau mot de passe trop court (min. 4)',true);return;}
+  if(nw!==cf){toast('Les mots de passe ne correspondent pas',true);return;}
+  const res=await fetch('/api/change-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({currentPassword:cur,newPassword:nw})});
+  const j=await res.json();
+  if(!j.ok){toast(j.error||'Échec',true);return;}
+  document.getElementById('p-cur').value=document.getElementById('p-new').value=document.getElementById('p-conf').value='';
+  closeOverlay(null,'m-pass');toast('Mot de passe modifié ✓');
+}
+
+// ─── MISE À JOUR ──────────────────────────────────────────────────────────────
+async function doUpdate(){
+  if(!confirm('Récupérer la dernière version depuis GitHub et redémarrer ?'))return;
+  toast('Mise à jour en cours…');
+  try{
+    const res=await fetch('/api/update',{method:'POST',headers:{'Authorization':'Bearer '+token}});
+    const j=await res.json();
+    if(!j.ok){toast(j.error||'Échec de la mise à jour',true);return;}
+    if(!j.updated){toast('Déjà à jour ✓');return;}
+    toast('Mis à jour ! Redémarrage…');
+    setTimeout(()=>location.reload(),5000);
+  }catch(e){toast('Erreur : '+e.message,true);}
+}
 
 // ─── MODALS ───────────────────────────────────────────────────────────────────
 function openOverlay(id){document.getElementById(id).classList.add('open');}
