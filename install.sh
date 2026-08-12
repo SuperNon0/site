@@ -3,14 +3,14 @@
 # install.sh — Déploiement 1-commande du hub super-nono.cc dans un LXC Proxmox.
 # À LANCER SUR LE SHELL DU NODE PROXMOX.
 #
-#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/site/claude/homepage-project-eval-x5skbs/install.sh)"
+#   bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/site/main/install.sh)"
 #
 # Options surchargeables :  CTID=130 CT_STORAGE=local-zfs bash -c "$(curl ...)"
 #
 set -euo pipefail
 
 REPO_URL="https://github.com/SuperNon0/site.git"
-BRANCH="${BRANCH:-claude/homepage-project-eval-x5skbs}"
+BRANCH="${BRANCH:-main}"
 
 CTID="${CTID:-}"
 HOSTNAME_CT="${HOSTNAME_CT:-hub}"

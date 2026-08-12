@@ -22,7 +22,7 @@ admin pour tout gérer depuis le navigateur.
 ## 🚀 Installation (1 commande, sur le node Proxmox)
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/site/claude/homepage-project-eval-x5skbs/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/site/main/install.sh)"
 ```
 
 Crée un LXC `hub` (Debian), installe Node + le hub, et affiche à la fin l'URL
