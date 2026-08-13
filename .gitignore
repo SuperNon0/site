@@ -1,11 +1,19 @@
-# Dépendances
-node_modules/
-app/node_modules/
-
-# Données runtime (générées dans le conteneur, jamais versionnées)
-app/data/*
-!app/data/default-config.json
-
-# Secrets / environnement
-*.env
+# Secrets & données
 .env
+data/
+*.db
+*.sqlite
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# OS / éditeurs
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

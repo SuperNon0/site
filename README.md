@@ -1,93 +1,76 @@
-# super-nono — hub central
+<div align="center">
 
-Le tableau de bord personnel de `super-nono.cc` : un serveur **Node.js + Express**
-qui affiche tes applications rangées en **Catégories → Sections**, avec un mode
-admin pour tout gérer depuis le navigateur.
+# site-base
 
-## ✨ Fonctionnalités
+**Fondation réutilisable pour démarrer un projet web** — thème « RecipeLog »
+(dark + doré), authentification multi-comptes derrière **Cloudflare Zero Trust**,
+et notifications **BotPanel** intégrées.
 
-- **Hiérarchie** Catégories → Sections → Applications.
-- **2 types de tuiles** : *apps* (grande carte icône + titre + description) et
-  *raccourcis* (chip compact icône + nom).
-- **Icônes au choix** : emoji, **logo custom uploadé**, ou icône **Material Design** (`mdi-…`).
-- **Couleur d'accent** par tuile (color picker).
-- **Widgets** : horloge + date, météo (Open-Meteo, sans clé — Le Grau-du-Roi).
-- **Mode admin protégé par mot de passe** : ajouter / éditer / supprimer /
-  réordonner catégories, sections et tuiles. La consultation reste libre.
-- **Changement du mot de passe admin** depuis l'interface (haché en scrypt).
-- **Mise à jour en 1 clic** depuis l'interface (git pull + install + redémarrage).
-- **PWA** : s'installe sur l'écran d'accueil et **s'ouvre en plein écran** ;
-  les liens s'ouvrent *dans* l'app (pas de mini-navigateur iOS).
+</div>
 
-## 🚀 Installation (1 commande, sur le node Proxmox)
+---
+
+Ce dépôt est un **template**. On le clone pour chaque nouveau projet : le thème,
+le login v2 et les notifications sont déjà en place, il n'y a qu'à ajouter les
+écrans métier. Il est pensé pour être **repris à l'identique** par un développeur
+(y compris un assistant IA) — voir [`CLAUDE.md`](CLAUDE.md).
+
+## Fonctionnalités
+
+- 🎨 **Thème RecipeLog** — dark-only, accent doré `#e8c547`, DM Serif Display +
+  DM Mono. CSS pur, tokens dans `:root`. Rendu fidèle aux maquettes de référence.
+- 🔐 **Auth v2 multi-comptes** — cycle de vie `pending → actif / refused / bloqué`,
+  rôles `super_admin` / `membre`, « voir en tant que » (impersonation) avec bandeau,
+  journal d'audit.
+- ☁️ **Cloudflare Zero Trust** — e-mail Google comme portier, **vérification du
+  JWT** `Cf-Access-Jwt-Assertion` + `aud`, login local par mot de passe en LAN.
+- 🔔 **Notifications BotPanel** — helper `notify(slug, **vars)`, branché sur le
+  cycle de vie des comptes, désactivable via `.env`.
+- 📦 **Déploiement Proxmox** — script LXC + service systemd + tunnel Cloudflare.
+
+## Démarrage rapide (dev local)
 
 ```bash
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/SuperNon0/site/main/install.sh)"
+python3 -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+# Renseigne au minimum SECRET_KEY et SUPERADMIN_PASSWORD dans .env
+python run.py            # → http://127.0.0.1:8000
 ```
 
-Crée un LXC `hub` (Debian), installe Node + le hub, et affiche à la fin l'URL
-et le **mot de passe admin**. Options : `CTID`, `CT_STORAGE`, `ADMIN_PASSWORD`,
-`HUB_PORT`… (voir en tête de `install.sh`).
+Sans Cloudflare en local, connecte-toi avec le `SUPERADMIN_PASSWORD` (accès LAN).
 
-Ensuite, pointe ton reverse proxy `super-nono.cc` vers `IP_DU_CONTENEUR:3000`.
+## Écrans
 
-## 🛠️ Mode admin
+| Écran | Quand | Template |
+|---|---|---|
+| Login local | Accès LAN (mot de passe super-admin) | `login.html` |
+| Demander un accès | E-mail CF autorisé mais inconnu | `demande.html` |
+| En attente | Compte `pending` | `attente.html` |
+| Refusé | Compte `refused` | `refus.html` |
+| Suspendu | Compte `bloqué` | `bloque.html` |
+| Comptes (gestion) | Super-admin | `comptes.html` |
+| Bandeau impersonation | « Voir en tant que » actif | `base.html` |
+| Dashboard démo | Connecté | `dashboard.html` (à remplacer) |
 
-Clique **« Admin »** en haut, entre le mot de passe → la barre affiche :
+Maquettes de référence + captures : [`docs/maquettes-auth-v2/`](docs/maquettes-auth-v2/).
 
-| Bouton | Rôle |
-|---|---|
-| **Gérer** | Active l'édition : `+ Catégorie`, `+ Section`, `+App`, `+Raccourci`, renommer (✎), supprimer (✕), réordonner (↑↓). |
-| **↻ MàJ** | Récupère la dernière version depuis GitHub (`git pull`) + `npm install` + redémarre le service. Dit « Déjà à jour » s'il n'y a rien de neuf. |
-| **Mot de passe** | Change le mot de passe admin (haché, stocké dans `data/auth.json`, jamais sur GitHub). Il remplace celui de l'installation. |
-| **Déconnexion** | Ferme la session admin. |
+## Documentation
 
-**Ajouter une app / un raccourci** : en mode Gérer, `+App` ou `+Raccourci` sur une
-section → choisis l'icône (**Emoji / Logo uploadé / MDI**), le nom, le lien, la
-couleur. Le raccourci est une tuile compacte sans description.
+- [`CLAUDE.md`](CLAUDE.md) — contrat de reproduction (à lire en premier).
+- [`docs/theme-recipelog.md`](docs/theme-recipelog.md) — cahier des charges du thème.
+- [`docs/authentification-v2.md`](docs/authentification-v2.md) — spec complète de l'auth.
+- [`docs/notifications-botpanel.md`](docs/notifications-botpanel.md) — intégration BotPanel.
+- [`docs/deploiement-proxmox.md`](docs/deploiement-proxmox.md) — guide Proxmox + Cloudflare.
 
-## 🔄 Le workflow de mise à jour
+## Stack
 
-1. Une amélioration est poussée sur GitHub.
-2. Dans le hub (connecté admin), tu cliques **↻ MàJ** → le conteneur se met à jour
-   et redémarre tout seul. Aucune ligne de commande.
+Flask 3 · SQLite · gunicorn · PyJWT · Jinja2 · CSS pur (thème RecipeLog).
 
-*(Alternative en console : `cd /opt/hub && git pull && cd app && npm install --omit=dev && systemctl restart hub`.)*
+## Personnaliser pour ton projet
 
-## 🗂️ Structure
+1. Marque : `BRAND_PREFIX` / `BRAND_SUFFIX` / `BRAND_BADGE` dans `.env`, logo `panel/static/logo.svg`.
+2. Contenu : remplace `dashboard.html` + `routes/main.py` par tes écrans.
+3. Données : ajoute tes tables (décide **partagé vs cloisonné**, cf. spec §7).
 
-```
-app/
-├── server.js               # serveur Express + API (config, auth, upload, update)
-├── package.json            # express, multer, @mdi/font
-├── data/
-│   └── default-config.json # contenu initial (tes 9 apps)
-└── public/
-    ├── index.html          # toute l'interface (thème RecipeLog)
-    ├── manifest.json        # PWA
-    └── icon-192/512.png
-install.sh                   # installeur LXC 1-commande
-```
-
-Au premier lancement, `data/config.json` est créé à partir de
-`default-config.json`, puis modifié via l'interface. Les logos uploadés vont dans
-`data/icons/`, le mot de passe dans `data/auth.json`. Ces fichiers runtime **ne
-sont pas versionnés** (`.gitignore`).
-
-## 🔌 API
-
-| Méthode | Route | Auth | Rôle |
-|---|---|---|---|
-| GET | `/api/config` | non | Récupère la configuration (affichage). |
-| GET | `/api/status` | non | Indique si un mot de passe est configuré. |
-| POST | `/api/login` | non | Connexion admin → renvoie un jeton. |
-| PUT | `/api/config` | oui | Enregistre la configuration. |
-| POST | `/api/upload` | oui | Upload d'un logo custom. |
-| POST | `/api/change-password` | oui | Change le mot de passe admin. |
-| POST | `/api/update` | oui | Met à jour et redémarre le hub. |
-
-## 🔐 Sécurité
-
-- L'édition exige le **mot de passe admin** (défini à l'installation, puis
-  modifiable dans l'UI ; stocké haché dans le conteneur, jamais sur GitHub).
-- Le dépôt étant public, aucun secret n'est committé (`.gitignore`).
+Ne modifie pas le thème ni la sécurité de l'auth sans raison — voir `CLAUDE.md`.
