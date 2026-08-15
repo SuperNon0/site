@@ -41,6 +41,12 @@ CREATE TABLE IF NOT EXISTS hub (
     id   INTEGER PRIMARY KEY CHECK (id = 1),
     data TEXT NOT NULL
 );
+
+-- Réglages configurables depuis l'UI (ex. Cloudflare) : clé/valeur.
+CREATE TABLE IF NOT EXISTS app_settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT
+);
 """
 
 

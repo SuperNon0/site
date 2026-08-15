@@ -14,9 +14,10 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from ..auth import (current_compte, get_compte, is_super_admin,
-                    login_required, super_admin_required)
+                    login_required, reset_jwk_cache, super_admin_required)
 from ..db import audit, get_db
 from ..notify import notify
+from ..settings import cf_config, set_setting
 from ..utils import fmt_dt
 
 bp = Blueprint("accounts", __name__)
@@ -61,7 +62,30 @@ def parametres():
         "parametres.html",
         has_password=bool(moi and moi["mdp_hash"]),
         impersonating=bool(session.get("impersonator_id")),
+        cf=cf_config(),
     )
+
+
+@bp.route("/parametres/cloudflare", methods=["POST"])
+@super_admin_required
+def cloudflare_settings():
+    """Enregistre la config Cloudflare Zero Trust depuis l'UI (spec §9.1)."""
+    if session.get("impersonator_id"):
+        flash("Reviens à ton compte pour modifier les réglages.", "error")
+        return redirect(url_for("accounts.parametres"))
+    team = request.form.get("cf_team", "").strip()
+    aud = request.form.get("cf_aud", "").strip()
+    verify = "1" if request.form.get("cf_verify") else "0"
+    if verify == "1" and (not team or not aud):
+        flash("Renseigne l'équipe ET l'AUD avant d'activer la vérification.", "error")
+        return redirect(url_for("accounts.parametres"))
+    set_setting("cf_team_domain", team)
+    set_setting("cf_aud", aud)
+    set_setting("cf_verify_jwt", verify)
+    reset_jwk_cache()
+    audit("config_cloudflare", _acteur(), detail=f"team={team} verify={verify}")
+    flash("Réglages Cloudflare enregistrés.", "success")
+    return redirect(url_for("accounts.parametres"))
 
 
 @bp.route("/parametres/mot-de-passe", methods=["POST"])

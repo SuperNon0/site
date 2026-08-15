@@ -28,47 +28,54 @@ except Exception:  # pragma: no cover
     jwt = None
     PyJWKClient = None
 
-_jwk_client = None
+_jwk_clients: dict = {}
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Cloudflare Access
 # ─────────────────────────────────────────────────────────────────────────────
-def _get_jwk_client() -> "PyJWKClient | None":
-    global _jwk_client
-    if _jwk_client is not None:
-        return _jwk_client
-    team = current_app.config.get("CF_ACCESS_TEAM_DOMAIN", "")
+def _get_jwk_client(team: str) -> "PyJWKClient | None":
     if not team or PyJWKClient is None:
         return None
-    certs_url = f"https://{team}.cloudflareaccess.com/cdn-cgi/access/certs"
-    _jwk_client = PyJWKClient(certs_url)
-    return _jwk_client
+    if team not in _jwk_clients:
+        certs_url = f"https://{team}.cloudflareaccess.com/cdn-cgi/access/certs"
+        _jwk_clients[team] = PyJWKClient(certs_url)
+    return _jwk_clients[team]
+
+
+def reset_jwk_cache() -> None:
+    """À appeler quand la config Cloudflare change (via les Paramètres)."""
+    _jwk_clients.clear()
 
 
 def cf_access_email() -> str | None:
     """E-mail Cloudflare vérifié pour la requête courante, sinon None.
 
-    - Si CF_VERIFY_JWT (défaut) : valide le JWT et l'`aud`, renvoie l'e-mail
-      contenu dans le token. Un en-tête forgé sans JWT valide est ignoré.
-    - Si CF_VERIFY_JWT=false (ex. origine déjà rendue injoignable sans CF) :
+    La configuration Cloudflare (équipe, aud, vérification) vient d'abord des
+    Paramètres (base), sinon du `.env`.
+
+    - Si vérification active (défaut) : valide le JWT et l'`aud`, renvoie
+      l'e-mail contenu dans le token. Un en-tête forgé sans JWT valide est ignoré.
+    - Si vérification désactivée (origine déjà rendue injoignable sans CF) :
       se contente de l'en-tête `Cf-Access-Authenticated-User-Email`.
     """
+    from .settings import cf_config
+    cfg = cf_config()
+
     header_email = request.headers.get("Cf-Access-Authenticated-User-Email")
     token = request.headers.get("Cf-Access-Jwt-Assertion")
 
-    if not current_app.config.get("CF_VERIFY_JWT", True):
+    if not cfg["verify"]:
         return header_email.strip().lower() if header_email else None
 
     if not token or jwt is None:
         return None
 
-    client = _get_jwk_client()
-    aud = current_app.config.get("CF_ACCESS_AUD", "")
-    team = current_app.config.get("CF_ACCESS_TEAM_DOMAIN", "")
+    team, aud = cfg["team"], cfg["aud"]
+    client = _get_jwk_client(team)
     if client is None or not aud or not team:
         current_app.logger.warning(
-            "CF_VERIFY_JWT actif mais CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD manquant."
+            "Vérification JWT active mais équipe Cloudflare / aud manquants."
         )
         return None
 
