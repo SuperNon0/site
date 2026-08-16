@@ -88,6 +88,31 @@ def cloudflare_settings():
     return redirect(url_for("accounts.parametres"))
 
 
+@bp.route("/parametres/update", methods=["POST"])
+@super_admin_required
+def update_app():
+    """Met à jour le hub depuis GitHub (git pull + deps) puis redémarre."""
+    import os
+    import shutil
+    import subprocess
+    helper = "/usr/local/bin/site-base-update"
+    if not (shutil.which("sudo") and os.path.exists(helper)):
+        flash("Mise à jour par l'UI non configurée sur ce serveur "
+              "(relance l'installeur ou utilise deploy/update.sh).", "error")
+        return redirect(url_for("accounts.parametres"))
+    try:
+        subprocess.Popen(["sudo", "-n", helper],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+    except Exception as exc:
+        flash(f"Échec de la mise à jour : {exc}", "error")
+        return redirect(url_for("accounts.parametres"))
+    audit("update_app", _acteur())
+    flash("Mise à jour lancée — le hub redémarre dans quelques secondes. "
+          "Recharge la page ensuite.", "success")
+    return redirect(url_for("accounts.parametres"))
+
+
 @bp.route("/parametres/mot-de-passe", methods=["POST"])
 @super_admin_required
 def changer_mdp():
