@@ -58,9 +58,13 @@ def gateway():
     return redirect(url_for("main.dashboard"))
 
 
-@bp.route("/login", methods=["POST"])
+@bp.route("/login", methods=["GET", "POST"])
 def login():
     """Login local par mot de passe (super-admin, accès LAN uniquement)."""
+    # Un accès direct en GET (rechargement, historique, redirection) renvoie
+    # proprement vers la page de connexion au lieu d'un 405.
+    if request.method == "GET":
+        return redirect(url_for("auth.gateway"))
     # Sécurité : si Cloudflare a authentifié un e-mail, on n'utilise pas ce chemin.
     if cf_access_email() is not None:
         return redirect(url_for("auth.gateway"))
