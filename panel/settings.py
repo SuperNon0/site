@@ -42,4 +42,9 @@ def cf_config() -> dict:
         verify_bool = bool(current_app.config.get("CF_VERIFY_JWT", True))
     else:
         verify_bool = verify == "1"
-    return {"team": (team or "").strip(), "aud": (aud or "").strip(), "verify": verify_bool}
+    # Normalise l'équipe : on veut juste le nom (ex. « super-nono »), même si
+    # l'utilisateur colle le domaine complet « super-nono.cloudflareaccess.com ».
+    t = (team or "").strip().removeprefix("https://").removeprefix("http://").strip("/")
+    if t.endswith(".cloudflareaccess.com"):
+        t = t[: -len(".cloudflareaccess.com")]
+    return {"team": t, "aud": (aud or "").strip(), "verify": verify_bool}
