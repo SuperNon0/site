@@ -13,7 +13,7 @@ from flask import (Blueprint, current_app, flash, redirect, render_template,
                    request, session, url_for)
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from ..auth import (current_compte, get_compte, is_super_admin,
+from ..auth import (cf_diagnostic, current_compte, get_compte, is_super_admin,
                     login_required, reset_jwk_cache, super_admin_required)
 from ..db import audit, get_db
 from ..notify import notify
@@ -63,6 +63,7 @@ def parametres():
         has_password=bool(moi and moi["mdp_hash"]),
         impersonating=bool(session.get("impersonator_id")),
         cf=cf_config(),
+        diag=cf_diagnostic(),
     )
 
 

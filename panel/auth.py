@@ -96,6 +96,53 @@ def cf_access_email() -> str | None:
     return email or None
 
 
+def cf_diagnostic() -> dict:
+    """Diagnostic Cloudflare pour la requête courante (Paramètres, super-admin).
+
+    Renvoie ce que Cloudflare envoie réellement + le résultat de la vérification
+    du JWT, avec la raison exacte en cas d'échec.
+    """
+    from .settings import cf_config
+    cfg = cf_config()
+    header_email = request.headers.get("Cf-Access-Authenticated-User-Email")
+    token = (request.headers.get("Cf-Access-Jwt-Assertion")
+             or request.cookies.get("CF_Authorization"))
+    d = {
+        "team": cfg["team"],
+        "aud": cfg["aud"],
+        "verify": cfg["verify"],
+        "header_email": header_email or "",
+        "has_token": bool(token),
+        "jwt_status": "non testé",
+        "jwt_email": "",
+        "jwt_error": "",
+    }
+    if not token:
+        d["jwt_error"] = ("Aucun jeton Cloudflare reçu → tu n'es pas passé par "
+                          "Cloudflare Access (accès local/IP, ou tunnel qui ne "
+                          "transmet pas le jeton).")
+        return d
+    if jwt is None:
+        d["jwt_error"] = "Librairie PyJWT absente sur le serveur."
+        return d
+    if not cfg["team"] or not cfg["aud"]:
+        d["jwt_error"] = "Équipe et/ou AUD non renseignés dans les Paramètres."
+        return d
+    try:
+        client = _get_jwk_client(cfg["team"])
+        key = client.get_signing_key_from_jwt(token).key
+        claims = jwt.decode(
+            token, key, algorithms=["RS256"], audience=cfg["aud"],
+            issuer=f"https://{cfg['team']}.cloudflareaccess.com",
+        )
+        d["jwt_status"] = "OK ✓"
+        d["jwt_email"] = (claims.get("email") or "")
+    except Exception as exc:
+        d["jwt_status"] = "échec ✗"
+        d["jwt_error"] = str(exc)
+    return d
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Comptes / session
 # ─────────────────────────────────────────────────────────────────────────────
