@@ -92,8 +92,14 @@ def _seed_superadmin(db: sqlite3.Connection) -> None:
     email = (cfg.get("SUPERADMIN_EMAIL") or "").strip().lower() or None
     password = cfg.get("SUPERADMIN_PASSWORD") or ""
 
-    row = db.execute("SELECT id FROM comptes WHERE role = 'super_admin' LIMIT 1").fetchone()
+    row = db.execute("SELECT id, email FROM comptes WHERE role = 'super_admin' LIMIT 1").fetchone()
     if row is not None:
+        # Rattache l'e-mail Google au super-admin s'il n'en a pas encore
+        # (permet de le définir après coup via SUPERADMIN_EMAIL + redémarrage).
+        if email and not row["email"]:
+            db.execute("UPDATE comptes SET email = ? WHERE id = ?", (email, row["id"]))
+            db.commit()
+            current_app.logger.info("E-mail du super-admin rattaché : %s", email)
         return  # déjà amorcé
 
     if not password and not email:

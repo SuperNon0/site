@@ -24,6 +24,8 @@ CT_PASSWORD="${CT_PASSWORD:-}"
 HUB_PORT="${HUB_PORT:-8000}"
 # Mot de passe du super-admin (login local LAN). Généré si vide.
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-}"
+# E-mail Google du super-admin (pour être reconnu via Cloudflare). Optionnel.
+ADMIN_EMAIL="${ADMIN_EMAIL:-}"
 # Marque affichée (logo = prefix doré + suffix italique) + badge.
 BRAND_PREFIX="${BRAND_PREFIX:-super}"; BRAND_SUFFIX="${BRAND_SUFFIX:--nono}"; BRAND_BADGE="${BRAND_BADGE:-hub}"
 
@@ -91,7 +93,7 @@ BRAND_SUFFIX=${BRAND_SUFFIX}
 BRAND_BADGE=${BRAND_BADGE}
 DATABASE_PATH=${INSTALL_DIR}/data/site-base.db
 SUPERADMIN_PASSWORD=${ADMIN_PASSWORD}
-SUPERADMIN_EMAIL=
+SUPERADMIN_EMAIL=${ADMIN_EMAIL}
 CF_VERIFY_JWT=false
 ALLOW_LOCAL_LOGIN=true
 BOTPANEL_URL=
