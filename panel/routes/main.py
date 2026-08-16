@@ -85,3 +85,29 @@ def api_hub_upload():
 @login_required
 def uploaded_file(filename):
     return send_from_directory(_uploads_dir(), filename)
+
+
+# ─── Mise à jour depuis l'UI (git pull + deps + redémarrage) ──────────────────
+@bp.post("/api/update")
+def api_update():
+    guard = _require_super_admin_json()
+    if guard:
+        return guard
+    import shutil
+    import subprocess
+    helper = "/usr/local/bin/site-base-update"
+    if not (shutil.which("sudo") and os.path.exists(helper)):
+        return jsonify(
+            ok=False,
+            error="Mise à jour par l'UI non configurée sur ce serveur "
+                  "(relance l'installeur ou utilise deploy/update.sh).",
+        ), 501
+    try:
+        subprocess.Popen(
+            ["sudo", "-n", helper],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except Exception as exc:  # pragma: no cover
+        return jsonify(ok=False, error=str(exc)), 500
+    return jsonify(ok=True, message="Mise à jour lancée, redémarrage dans quelques secondes…")

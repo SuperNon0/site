@@ -76,7 +76,7 @@ INNER="$(cat <<INNER
 set -e
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get install -y -qq python3 python3-venv python3-pip git ca-certificates >/dev/null
+apt-get install -y -qq python3 python3-venv python3-pip git ca-certificates sudo >/dev/null
 id sitebase >/dev/null 2>&1 || useradd --system --shell /usr/sbin/nologin --home ${INSTALL_DIR} sitebase
 git clone --depth 1 --branch "$BRANCH" "$REPO_URL" ${INSTALL_DIR} >/dev/null 2>&1
 mkdir -p ${INSTALL_DIR}/data
@@ -105,6 +105,19 @@ sed 's|127.0.0.1:8000|0.0.0.0:${HUB_PORT}|' ${INSTALL_DIR}/deploy/site-base.serv
 chown -R sitebase:sitebase ${INSTALL_DIR}
 systemctl daemon-reload
 systemctl enable --now site-base >/dev/null 2>&1
+
+# Helper de mise à jour depuis l'UI (lancé en root via sudo par l'app sitebase)
+cat > /usr/local/bin/site-base-update <<'UPD'
+#!/usr/bin/env bash
+set -e
+cd /opt/site-base
+sudo -u sitebase git pull --ff-only
+sudo -u sitebase /opt/site-base/.venv/bin/pip install -q -r requirements.txt
+systemd-run --no-block --on-active=2 --collect systemctl restart site-base
+UPD
+chmod 755 /usr/local/bin/site-base-update
+echo 'sitebase ALL=(root) NOPASSWD: /usr/local/bin/site-base-update' > /etc/sudoers.d/site-base-update
+chmod 440 /etc/sudoers.d/site-base-update
 INNER
 )"
 pct exec "$CTID" -- bash -c "$INNER"

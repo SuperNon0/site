@@ -100,6 +100,7 @@
   <div class="hub-bar">
     {% if is_super_admin %}
     <button class="hub-lnk" id="manage-lnk" onclick="toggleManage()">Gérer</button>
+    <button class="hub-lnk" onclick="doUpdate()">↻ MàJ</button>
     <a class="hub-lnk" href="{{ url_for('accounts.parametres') }}">Paramètres</a>
     {% endif %}
     <a class="hub-lnk" href="{{ url_for('auth.logout') }}">Déconnexion</a>
@@ -197,6 +198,17 @@ async function save(){
   return true;
 }
 function toggleManage(){if(!window.IS_ADMIN)return;manageMode=!manageMode;render();}
+async function doUpdate(){
+  if(!confirm('Mettre à jour le hub depuis GitHub et redémarrer ?'))return;
+  toast('Mise à jour en cours…');
+  try{
+    const r=await fetch('/api/update',{method:'POST',credentials:'same-origin'});
+    const j=await r.json();
+    if(!j.ok){toast(j.error||'Échec de la mise à jour',true);return;}
+    toast('Mise à jour lancée, redémarrage…');
+    setTimeout(()=>location.reload(),15000);
+  }catch(e){toast('Erreur : '+e.message,true);}
+}
 
 async function addCat(){const n=prompt('Nom de la catégorie ?');if(!n)return;config.categories.push({id:uid(),name:n.trim(),sections:[]});render();await save();}
 async function renameCat(id){const c=findCat(id);const n=prompt('Nouveau nom',c.name);if(!n)return;c.name=n.trim();render();await save();}
