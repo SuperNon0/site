@@ -92,25 +92,52 @@ def cloudflare_settings():
 @bp.route("/parametres/update", methods=["POST"])
 @super_admin_required
 def update_app():
-    """Met à jour le hub depuis GitHub (git pull + deps) puis redémarre."""
+    """Met à jour le hub depuis GitHub (git pull + deps) puis recharge.
+
+    Le service tourne sous l'utilisateur propriétaire du dépôt : il fait donc
+    lui-même le pull et l'install (sans sudo), et remonte l'erreur exacte en cas
+    d'échec. Le rechargement du code se fait par un signal à gunicorn (SIGHUP),
+    sans sudo ni systemctl.
+    """
     import os
-    import shutil
+    import signal
     import subprocess
-    helper = "/usr/local/bin/site-base-update"
-    if not (shutil.which("sudo") and os.path.exists(helper)):
-        flash("Mise à jour par l'UI non configurée sur ce serveur "
-              "(relance l'installeur ou utilise deploy/update.sh).", "error")
-        return redirect(url_for("accounts.parametres"))
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    pip = os.path.join(repo, ".venv", "bin", "pip")
+
     try:
-        subprocess.Popen(["sudo", "-n", helper],
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         start_new_session=True)
+        pull = subprocess.run(["git", "-C", repo, "pull", "--ff-only"],
+                              capture_output=True, text=True, timeout=90)
     except Exception as exc:
-        flash(f"Échec de la mise à jour : {exc}", "error")
+        flash(f"Échec de git : {exc}", "error")
         return redirect(url_for("accounts.parametres"))
+    if pull.returncode != 0:
+        flash("git pull a échoué : " + (pull.stderr or pull.stdout).strip()[:400], "error")
+        return redirect(url_for("accounts.parametres"))
+    if "Already up to date" in pull.stdout or "Déjà à jour" in pull.stdout:
+        flash("Déjà à jour ✓", "info")
+        return redirect(url_for("accounts.parametres"))
+
+    if os.path.exists(pip):
+        pipr = subprocess.run([pip, "install", "-q", "-r", os.path.join(repo, "requirements.txt")],
+                              capture_output=True, text=True, timeout=300)
+        if pipr.returncode != 0:
+            flash("Code récupéré mais l'install des dépendances a échoué : "
+                  + pipr.stderr.strip()[:300], "error")
+            return redirect(url_for("accounts.parametres"))
+
     audit("update_app", _acteur())
-    flash("Mise à jour lancée — le hub redémarre dans quelques secondes. "
-          "Recharge la page ensuite.", "success")
+
+    # Rechargement du code sans sudo : SIGHUP au master gunicorn.
+    if "gunicorn" in request.environ.get("SERVER_SOFTWARE", "").lower():
+        try:
+            os.kill(os.getppid(), signal.SIGHUP)
+            flash("Mis à jour et rechargé ✓ — recharge la page dans ~10 s.", "success")
+            return redirect(url_for("accounts.parametres"))
+        except Exception:
+            pass
+    flash("Code mis à jour ✓ — redémarre le service pour l'appliquer "
+          "(systemctl restart site-base).", "success")
     return redirect(url_for("accounts.parametres"))
 
 
