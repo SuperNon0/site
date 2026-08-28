@@ -3,11 +3,10 @@
 {% block badge %}hub{% endblock %}
 
 {% block head %}
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="{{ brand.prefix }}{{ brand.suffix }}">
-<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+{# Volontairement PAS de mode PWA « standalone » (apple-mobile-web-app-capable,
+   manifest display:standalone) : ce mode fait ouvrir les liens vers un autre
+   sous-domaine dans le mini-navigateur iOS (croix ✕). Comme l'ancien panel, on
+   reste en page web normale → les apps s'ouvrent sans overlay. #}
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 {% raw %}
@@ -184,8 +183,8 @@ function render(){
   wrap.innerHTML=h;
 }
 
-// Navigation PWA (reste plein écran sur iOS)
-document.addEventListener('click',function(e){const a=e.target.closest('a[data-nav]');if(!a||manageMode)return;e.preventDefault();window.location.href=a.href;});
+// Liens simples (comme l'ancien panel) : pas d'interception JS, sinon iOS
+// ouvre le mini-navigateur. La navigation par défaut du navigateur suffit.
 
 const findCat=id=>config.categories.find(c=>c.id===id);
 const findSec=(c,s)=>(findCat(c)||{}).sections?.find(x=>x.id===s);
