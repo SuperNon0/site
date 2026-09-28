@@ -2,75 +2,140 @@
 {% block title %}{{ brand.prefix }}{{ brand.suffix }} — hub{% endblock %}
 {% block badge %}hub{% endblock %}
 
+{# Le hub « Cockpit » a son propre en-tête (rail + bandeau) : on retire la topbar de base. #}
+{% block topbar %}{% endblock %}
+
 {% block head %}
-{# Volontairement PAS de mode PWA « standalone » (apple-mobile-web-app-capable,
-   manifest display:standalone) : ce mode fait ouvrir les liens vers un autre
-   sous-domaine dans le mini-navigateur iOS (croix ✕). Comme l'ancien panel, on
-   reste en page web normale → les apps s'ouvrent sans overlay. #}
+{# Volontairement PAS de mode PWA « standalone » : ce mode fait ouvrir les liens
+   vers un autre sous-domaine dans le mini-navigateur iOS (croix ✕). On reste en
+   page web normale → les apps s'ouvrent sans overlay. #}
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
 {% raw %}
 <style>
-  .hub-main{max-width:1080px;margin:0 auto;padding:18px 16px 60px}
-  .hub-bar{display:flex;justify-content:flex-end;gap:.8rem;margin-bottom:1rem}
-  .hub-lnk{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;background:none;border:none;cursor:pointer;font-family:var(--font-mono);transition:color .2s}
-  .hub-lnk:hover,.hub-lnk.active{color:var(--accent)}
+  /* ── Cockpit : rail de catégories + bandeau horloge/météo + tuiles teintées ── */
+  .app{
+    display:flex;align-items:flex-start;min-height:100vh;min-height:100dvh;
+    --line-soft:#20242a;--muted-2:#5f646c;
+    --accent-soft:rgba(232,197,71,.14);--accent-line:rgba(232,197,71,.4);
+  }
 
-  .hub-widgets{display:flex;gap:.75rem;max-width:460px;margin:0 auto 1.8rem}
-  .hub-w{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-md,14px);padding:.85rem 1rem;display:flex;align-items:center;gap:.7rem}
-  .hw-time{font-family:var(--font-serif);font-size:1.5rem;color:var(--accent);line-height:1}
-  .hw-date,.hw-loc{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-top:.25rem}
-  .hw-emoji{font-size:1.7rem}
-  .hw-temp{font-family:var(--font-serif);font-size:1.4rem;color:var(--accent);line-height:1}
+  /* RAIL (desktop) */
+  .rail{position:sticky;top:0;height:100vh;height:100dvh;width:84px;flex:none;background:var(--surface);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 0;overflow-y:auto;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail-logo{font-family:var(--font-serif);color:var(--accent);font-size:24px;margin-bottom:12px}
+  .rail-item{width:64px;padding:9px 2px;border:none;background:none;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);position:relative;cursor:pointer;transition:color .15s,background .15s}
+  .rail-item .ri-ico{font-size:20px;line-height:1}
+  .rail-item .ri-ico .letter{font-family:var(--font-serif)}
+  .rail-item .ri-lbl{font-size:8.5px;letter-spacing:.4px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
+  .rail-item:hover{color:var(--text)}
+  .rail-item.on{color:var(--accent);background:var(--accent-soft)}
+  .rail-item.on::before{content:"";position:absolute;left:0;top:13px;bottom:13px;width:3px;border-radius:0 2px 2px 0;background:var(--accent)}
+  .rail-item.add{color:var(--muted-2)}
 
-  .cat-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;border-bottom:1px solid var(--border);padding-bottom:.4rem}
-  .cat-name{font-family:var(--font-serif);font-size:1.35rem;color:var(--accent)}
-  .cat{margin-bottom:2rem}
-  .sec{margin-bottom:1.2rem}
-  .sec-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.55rem}
-  .sec-name{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
-  .mbtns{display:flex;gap:.3rem;flex-wrap:wrap}
-  .mbtn{background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:5px;font-size:.56rem;padding:.15rem .4rem;font-family:var(--font-mono);cursor:pointer;transition:.2s;line-height:1.4}
+  /* MAIN */
+  .ck-main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .hero{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;padding:26px 30px 20px;border-bottom:1px solid var(--line-soft)}
+  .ck-brand{font-family:var(--font-serif);font-size:16px;color:var(--accent);letter-spacing:.3px}
+  .ck-brand span{color:var(--text);font-style:italic}
+  .ck-sub{font-size:9px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.14em;margin-top:2px}
+  .ck-clock{font-family:var(--font-serif);font-size:clamp(38px,7vw,56px);line-height:1;letter-spacing:1px;font-variant-numeric:tabular-nums;margin-top:10px;color:var(--text)}
+  .ck-date{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.4px;margin-top:9px}
+  .hero-r{display:flex;flex-direction:column;align-items:flex-end;gap:14px}
+  .wx{display:flex;align-items:center;gap:12px;text-align:right}
+  .wx-emoji{font-size:34px;line-height:1}
+  .wx-temp{font-family:var(--font-serif);font-size:30px;line-height:1;color:var(--text)}
+  .wx-cond{font-size:11px;color:var(--muted)}
+  .wx-loc{font-size:9.5px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em;margin-top:2px}
+  .admin{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .ck-lnk{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:6px 12px;cursor:pointer;font-family:var(--font-mono);transition:color .2s,border-color .2s}
+  .ck-lnk:hover,.ck-lnk.active{color:var(--accent);border-color:var(--accent-line)}
+
+  /* CONTENU */
+  .content{padding:24px 30px 60px;display:flex;flex-direction:column}
+  .cat-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+  .cat-title{font-family:var(--font-serif);font-size:clamp(24px,4vw,32px);color:var(--accent)}
+  .manage-btns{display:flex;gap:5px;flex-wrap:wrap}
+  .mbtn{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:6px;font-size:11px;padding:5px 9px;font-family:var(--font-mono);cursor:pointer;transition:border-color .2s,color .2s;line-height:1.3}
   .mbtn:hover{border-color:var(--accent);color:var(--accent)}
   .mbtn.del:hover{border-color:var(--danger);color:var(--danger)}
+  .add-cat-btn{align-self:flex-start;margin-top:20px}
 
-  .apps{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.7rem}
-  .card{display:flex;align-items:center;gap:1.1rem;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;color:var(--text);transition:border-color .2s,transform .15s;position:relative}
-  .card:hover{transform:translateY(-2px)}
-  .card-icon{flex-shrink:0;width:2.3rem;display:flex;align-items:center;justify-content:center}
-  .i-emoji{font-size:1.7rem}.i-img{width:1.9rem;height:1.9rem;object-fit:contain;border-radius:6px}.mdi{font-size:1.7rem;line-height:1}
-  .card-body{flex:1;min-width:0}
-  .card-title{font-family:var(--font-serif);font-size:1.1rem;margin-bottom:.12rem}
-  .card-desc{font-size:.62rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .card-arrow{flex-shrink:0;color:var(--border);font-size:1rem}
+  /* FAVORIS */
+  .fav-row{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 6px}
+  .fav{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line-soft);border-radius:999px;padding:6px 15px 6px 7px;font-size:12.5px;color:var(--text);transition:border-color .2s,transform .15s}
+  .fav:hover{border-color:var(--accent-line);transform:translateY(-1px)}
+  .fav-ico{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;font-size:14px;flex:none}
+  .fav-ico .i-img{width:16px;height:16px;object-fit:contain}
+  .fav-ico .mdi{font-size:15px}
 
-  .shortcuts{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.7rem}
-  .chip{display:flex;align-items:center;gap:.5rem;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.5rem .8rem;color:var(--text);transition:.2s;position:relative}
+  /* BANDES / SECTIONS */
+  .band{margin-top:24px}
+  .band-lbl{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  .band-name{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:var(--muted-2)}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px}
+  .tile{position:relative;border-radius:var(--radius-md);padding:16px;min-height:104px;display:flex;flex-direction:column;justify-content:space-between;border:1px solid var(--line-soft);color:var(--text);transition:transform .15s,border-color .2s}
+  .tile:hover{transform:translateY(-3px)}
+  .tile-ico{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;font-size:21px;flex:none}
+  .tile-ico .i-img{width:24px;height:24px;object-fit:contain}
+  .tile-ico .mdi{font-size:22px;line-height:1}
+  .tile-t{font-family:var(--font-serif);font-size:18px;margin-top:14px;line-height:1.1}
+  .tile-d{font-size:11px;color:var(--muted);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* RACCOURCIS */
+  .shortcuts{display:flex;flex-wrap:wrap;gap:9px;margin-top:4px}
+  .chip{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line-soft);border-radius:10px;padding:9px 14px;color:var(--text);transition:border-color .2s,transform .15s;position:relative}
   .chip:hover{transform:translateY(-1px)}
-  .chip .i-emoji,.chip .mdi{font-size:1.1rem}.chip .i-img{width:1.2rem;height:1.2rem}
-  .chip-title{font-size:.75rem}
-  .item-actions{position:absolute;top:.4rem;right:.5rem;display:flex;gap:.25rem}
-  .empty{font-size:.65rem;color:var(--muted);font-style:italic;padding:.4rem 0}
+  .chip-ico{display:flex;align-items:center;justify-content:center;font-size:16px}
+  .chip-ico .i-img{width:18px;height:18px;object-fit:contain}
+  .chip-title{font-size:13px}
 
+  .item-actions{position:absolute;top:8px;right:8px;display:flex;gap:4px;z-index:2}
+  .item-actions .mbtn{padding:3px 6px;font-size:10px;background:var(--bg)}
+  .empty{font-size:12px;color:var(--muted-2);font-style:italic;padding:6px 0}
+
+  /* TABBAR (mobile) */
+  .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--surface);border-top:1px solid var(--line-soft);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));justify-content:space-around;gap:2px}
+  .tab-item{flex:1;min-width:0;border:none;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;border-radius:8px;cursor:pointer}
+  .tab-item .ti-ico{font-size:19px;line-height:1}
+  .tab-item .ti-ico .letter{font-family:var(--font-serif)}
+  .tab-item .ti-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tab-item.on{color:var(--accent)}
+
+  @media (max-width:719px){
+    .rail{display:none}
+    .app{display:block}
+    .hero{padding:20px 18px 16px}
+    .content{padding:18px 16px calc(90px + env(safe-area-inset-bottom,0px))}
+    .tiles{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+    .tabbar{display:flex}
+  }
+
+  /* MODALS (bottom sheet) */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:500;align-items:flex-end;justify-content:center}
   .overlay.open{display:flex}
-  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:440px;padding:1.2rem 1.4rem 2.2rem;max-height:92vh;overflow-y:auto}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:460px;padding:1.2rem 1.4rem calc(2.2rem + env(safe-area-inset-bottom,0px));max-height:92vh;overflow-y:auto}
+  @media (min-width:720px){.overlay{align-items:center}.modal{border-radius:20px}}
   .handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto .9rem}
   .m-title{font-family:var(--font-serif);font-size:1.2rem;color:var(--accent);margin-bottom:1.1rem}
   .field{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.8rem}
-  .field label{font-size:.6rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-  .field input{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:.82rem;padding:.55rem .75rem;outline:none}
+  .field label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+  .field input[type=text],.field input[type=url]{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:.85rem;padding:.6rem .75rem;outline:none;width:100%}
   .field input:focus{border-color:var(--accent)}
+  .check-row{display:flex;align-items:center;gap:.55rem;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.6rem .75rem;cursor:pointer;font-size:.8rem}
+  .check-row input{width:16px;height:16px;accent-color:var(--accent)}
   .mrow{display:flex;gap:.8rem;margin-top:1rem}
-  .b-cancel{flex:1;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--font-mono);font-size:.8rem;padding:.7rem;cursor:pointer}
-  .b-ok{flex:2;background:var(--accent);color:#0e0f11;border:none;border-radius:8px;font-family:var(--font-mono);font-size:.8rem;font-weight:500;padding:.7rem;cursor:pointer}
+  .b-cancel{flex:1;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;font-family:var(--font-mono);font-size:.82rem;padding:.75rem;cursor:pointer}
+  .b-ok{flex:2;background:var(--accent);color:#0e0f11;border:none;border-radius:8px;font-family:var(--font-mono);font-size:.82rem;font-weight:500;padding:.75rem;cursor:pointer}
+  .b-ok:hover{opacity:.88}
 
   .tabs{display:flex;gap:.4rem;margin-bottom:.6rem}
-  .tab{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:.68rem;padding:.45rem;font-family:var(--font-mono);cursor:pointer}
+  .tab{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:.7rem;padding:.5rem;font-family:var(--font-mono);cursor:pointer}
   .tab.active{border-color:var(--accent);color:var(--accent)}
   .pane{display:none}.pane.active{display:block}
   .ipreview{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;font-size:1.6rem;min-height:2rem}
-  .ipreview .i-img{width:1.8rem;height:1.8rem}
+  .ipreview .i-img{width:1.8rem;height:1.8rem;object-fit:contain}
+  .ipreview .mdi{font-size:1.6rem}
   .egrid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;max-height:170px;overflow-y:auto;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:.4rem}
   .ecats{display:flex;overflow-x:auto;scrollbar-width:none;margin-bottom:.3rem}.ecats::-webkit-scrollbar{display:none}
   .ecat{background:none;border:none;padding:.3rem .45rem;font-size:.95rem;opacity:.5;cursor:pointer}.ecat.active{opacity:1}
@@ -88,29 +153,49 @@
   .cp-presets{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.5rem}
   .cp-preset{width:22px;height:22px;border-radius:4px;cursor:pointer;border:2px solid transparent}.cp-preset.selected{border-color:var(--text)}
 
-  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(4rem);background:var(--accent);color:#0e0f11;font-size:.75rem;padding:.55rem 1.2rem;border-radius:20px;opacity:0;transition:.25s;pointer-events:none;z-index:600}
+  .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(4rem);background:var(--accent);color:#0e0f11;font-size:.78rem;padding:.6rem 1.2rem;border-radius:20px;opacity:0;transition:.25s;pointer-events:none;z-index:600}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  @media (prefers-reduced-motion:reduce){.tile,.chip,.fav,.ck-lnk{transition:none}}
 </style>
 {% endraw %}
 {% endblock %}
 
 {% block content %}
-<main class="hub-main">
-  <div class="hub-bar">
-    {% if is_super_admin %}
-    <button class="hub-lnk" id="manage-lnk" onclick="toggleManage()">Gérer</button>
-    <a class="hub-lnk" href="{{ url_for('accounts.parametres') }}">Paramètres</a>
-    {% endif %}
-    <a class="hub-lnk" href="{{ url_for('auth.logout') }}">Déconnexion</a>
-  </div>
+<div class="app">
+  <aside class="rail" id="rail"></aside>
 
-  <div class="hub-widgets">
-    <div class="hub-w"><div><div class="hw-time" id="w-time">--:--</div><div class="hw-date" id="w-date">—</div></div></div>
-    <div class="hub-w"><div class="hw-emoji" id="w-emoji">⏳</div><div><div class="hw-temp" id="w-temp">--°</div><div class="hw-loc" id="w-loc">—</div></div></div>
-  </div>
+  <main class="ck-main">
+    <header class="hero">
+      <div class="hero-l">
+        <div class="ck-brand">{{ brand.prefix }}<span>{{ brand.suffix }}</span></div>
+        <div class="ck-sub">Hub central</div>
+        <div class="ck-clock" id="w-time">--:--</div>
+        <div class="ck-date" id="w-date">—</div>
+      </div>
+      <div class="hero-r">
+        <div class="admin">
+          {% if is_super_admin %}
+          <button class="ck-lnk" id="manage-lnk" onclick="toggleManage()">Gérer</button>
+          <a class="ck-lnk" href="{{ url_for('accounts.parametres') }}">Paramètres</a>
+          {% endif %}
+          <a class="ck-lnk" href="{{ url_for('auth.logout') }}">Déconnexion</a>
+        </div>
+        <div class="wx">
+          <div class="wx-emoji" id="w-emoji">⏳</div>
+          <div>
+            <div class="wx-temp" id="w-temp">--°</div>
+            <div class="wx-cond" id="w-cond">—</div>
+            <div class="wx-loc" id="w-loc">—</div>
+          </div>
+        </div>
+      </div>
+    </header>
 
-  <div id="wrap"></div>
-</main>
+    <div class="content" id="content"></div>
+  </main>
+
+  <nav class="tabbar" id="tabbar"></nav>
+</div>
 
 <!-- MODAL ITEM -->
 <div class="overlay" id="m-item" onclick="closeOv(event,'m-item')">
@@ -139,6 +224,10 @@
       <div class="cp-bottom"><div class="cp-swatch" id="cp-swatch"></div><div class="cp-hex-wrap"><span style="color:var(--muted)">#</span><input class="cp-hex" id="cp-hex" maxlength="6" value="e8c547"></div></div>
       <div class="cp-presets" id="cp-presets"></div>
     </div>
+    <div class="field">
+      <label>Favori</label>
+      <label class="check-row"><input type="checkbox" id="f-fav"> Afficher dans la barre des favoris</label>
+    </div>
     <div class="mrow"><button class="b-cancel" onclick="closeOv(null,'m-item')">Annuler</button><button class="b-ok" onclick="saveItem()">Enregistrer</button></div>
   </div>
 </div>
@@ -148,43 +237,81 @@
 <script>window.IS_ADMIN = {{ 'true' if is_super_admin else 'false' }};</script>
 {% raw %}
 <script>
-let config={settings:{},categories:[]},manageMode=false,editRef=null,curIcon={kind:'emoji',value:'🔗'};
+let config={settings:{},categories:[]},manageMode=false,currentCat=null,editRef=null,curIcon={kind:'emoji',value:'🔗'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function toast(m,e){const t=document.getElementById('toast');t.textContent=m;t.style.background=e?'var(--danger)':'var(--accent)';t.style.color=e?'#fff':'#0e0f11';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
 async function init(){
   config=await (await fetch('/api/hub',{credentials:'same-origin'})).json();
+  if(!currentCat||!findCat(currentCat))currentCat=(config.categories[0]||{}).id||null;
   render();startClock();loadWeather();
 }
+
 function iconHTML(ic){if(!ic)return'';if(ic.kind==='image')return `<img class="i-img" src="${esc(ic.value)}" alt="">`;if(ic.kind==='mdi')return `<i class="mdi mdi-${esc(ic.value)}"></i>`;return `<span class="i-emoji">${esc(ic.value)}</span>`;}
+function catIcon(cat){if(cat.icon)return `<span class="emoji">${esc(cat.icon)}</span>`;return `<span class="letter">${esc((cat.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;}
 function actionsHTML(c,s,it){return `<div class="item-actions"><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',-1);event.preventDefault();event.stopPropagation()">↑</button><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',1);event.preventDefault();event.stopPropagation()">↓</button><button class="mbtn" onclick="openItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✎</button><button class="mbtn del" onclick="deleteItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✕</button></div>`;}
-function hexA(hex,a){hex=(hex||'#e8c547').replace('#','');if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return `rgba(${r},${g},${b},${a})`;}
+function hexA(hex,a){hex=(hex||'#e8c547').replace('#','');if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return `rgba(${r||0},${g||0},${b||0},${a})`;}
 
 function render(){
-  const wrap=document.getElementById('wrap');
   const ml=document.getElementById('manage-lnk');
   if(ml){ml.classList.toggle('active',manageMode);ml.textContent=manageMode?'Terminer':'Gérer';}
+  renderRail();renderTabbar();renderContent();
+}
+function renderRail(){
+  let h=`<div class="rail-logo">◆</div>`;
+  config.categories.forEach(cat=>{h+=`<button class="rail-item ${cat.id===currentCat?'on':''}" onclick="selectCat('${cat.id}')" title="${esc(cat.name)}"><span class="ri-ico">${catIcon(cat)}</span><span class="ri-lbl">${esc(cat.name)}</span></button>`;});
+  if(manageMode)h+=`<button class="rail-item add" onclick="addCat()"><span class="ri-ico">＋</span><span class="ri-lbl">Cat.</span></button>`;
+  document.getElementById('rail').innerHTML=h;
+}
+function renderTabbar(){
   let h='';
-  config.categories.forEach(cat=>{
-    h+=`<div class="cat"><div class="cat-head"><div class="cat-name">${esc(cat.name)}</div>${manageMode?`<div class="mbtns"><button class="mbtn" onclick="moveCat('${cat.id}',-1)">↑</button><button class="mbtn" onclick="moveCat('${cat.id}',1)">↓</button><button class="mbtn" onclick="renameCat('${cat.id}')">✎</button><button class="mbtn del" onclick="deleteCat('${cat.id}')">✕</button></div>`:''}</div>`;
-    (cat.sections||[]).forEach(sec=>{
-      h+=`<div class="sec"><div class="sec-head"><div class="sec-name">${esc(sec.name)}</div>${manageMode?`<div class="mbtns"><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'app')">+App</button><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'shortcut')">+Raccourci</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',-1)">↑</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',1)">↓</button><button class="mbtn" onclick="renameSec('${cat.id}','${sec.id}')">✎</button><button class="mbtn del" onclick="deleteSec('${cat.id}','${sec.id}')">✕</button></div>`:''}</div>`;
-      const apps=(sec.items||[]).filter(i=>i.type!=='shortcut'),shorts=(sec.items||[]).filter(i=>i.type==='shortcut');
-      if(apps.length){h+='<div class="apps">';apps.forEach(it=>{const b=hexA(it.color,.25),bh=hexA(it.color,.6);h+=`<a class="card" href="${esc(it.url)}" data-nav style="border-color:${b}" onmouseover="this.style.borderColor='${bh}'" onmouseout="this.style.borderColor='${b}'" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<div class="card-icon">${iconHTML(it.icon)}</div><div class="card-body"><div class="card-title" style="color:${esc(it.color||'var(--text)')}">${esc(it.title)}</div><div class="card-desc">${esc(it.desc||'')}</div></div><div class="card-arrow">›</div></a>`;});h+='</div>';}
-      if(shorts.length){h+='<div class="shortcuts">';shorts.forEach(it=>{const b=hexA(it.color,.35),bh=hexA(it.color,.7);h+=`<a class="chip" href="${esc(it.url)}" data-nav style="border-color:${b}" onmouseover="this.style.borderColor='${bh}'" onmouseout="this.style.borderColor='${b}'" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<span class="card-icon" style="width:auto">${iconHTML(it.icon)}</span><span class="chip-title">${esc(it.title)}</span></a>`;});h+='</div>';}
-      if(!apps.length&&!shorts.length)h+='<div class="empty">Vide</div>';
-      h+='</div>';
-    });
-    if(manageMode)h+=`<button class="mbtn" onclick="addSec('${cat.id}')">+ Section</button>`;
-    h+='</div>';
+  config.categories.forEach(cat=>{h+=`<button class="tab-item ${cat.id===currentCat?'on':''}" onclick="selectCat('${cat.id}')"><span class="ti-ico">${catIcon(cat)}</span><span class="ti-lbl">${esc(cat.name)}</span></button>`;});
+  if(manageMode)h+=`<button class="tab-item" onclick="addCat()"><span class="ti-ico">＋</span><span class="ti-lbl">Cat.</span></button>`;
+  document.getElementById('tabbar').innerHTML=h;
+}
+function renderContent(){
+  const wrap=document.getElementById('content');
+  const cat=findCat(currentCat)||config.categories[0];
+  if(!cat){wrap.innerHTML=manageMode?`<button class="mbtn" onclick="addCat()">+ Créer une catégorie</button>`:`<div class="empty">Aucune catégorie pour le moment.</div>`;return;}
+  let h=`<div class="cat-bar"><div class="cat-title">${esc(cat.name)}</div>`;
+  if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" onclick="moveCat('${cat.id}',-1)">↑</button><button class="mbtn" onclick="moveCat('${cat.id}',1)">↓</button><button class="mbtn" onclick="renameCat('${cat.id}')">✎ Nom</button><button class="mbtn" onclick="setCatIcon('${cat.id}')">☺ Icône</button><button class="mbtn" onclick="addSec('${cat.id}')">+ Section</button><button class="mbtn del" onclick="deleteCat('${cat.id}')">✕</button></div>`;}
+  h+=`</div>`;
+
+  if(!manageMode){
+    const favs=collectFavs();
+    if(favs.length){
+      h+=`<div class="fav-row">`;
+      favs.forEach(it=>{h+=`<a class="fav" href="${esc(it.url)}"><span class="fav-ico" style="background:${hexA(it.color,.22)};color:${esc(it.color||'var(--accent)')}">${iconHTML(it.icon)}</span><span>${esc(it.title)}</span></a>`;});
+      h+=`</div>`;
+    }
+  }
+
+  (cat.sections||[]).forEach(sec=>{
+    h+=`<div class="band"><div class="band-lbl"><div class="band-name">${esc(sec.name)}</div>`;
+    if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'app')">+App</button><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'shortcut')">+Raccourci</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',-1)">↑</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',1)">↓</button><button class="mbtn" onclick="renameSec('${cat.id}','${sec.id}')">✎</button><button class="mbtn del" onclick="deleteSec('${cat.id}','${sec.id}')">✕</button></div>`;}
+    h+=`</div>`;
+    const apps=(sec.items||[]).filter(i=>i.type!=='shortcut'),shorts=(sec.items||[]).filter(i=>i.type==='shortcut');
+    if(apps.length){
+      h+=`<div class="tiles">`;
+      apps.forEach(it=>{const bg=`linear-gradient(150deg, ${hexA(it.color,.20)}, var(--card) 82%)`;h+=`<a class="tile" href="${esc(it.url)}" style="background:${bg};border-color:${hexA(it.color,.4)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<div class="tile-ico" style="background:${hexA(it.color,.24)};border:1px solid ${hexA(it.color,.5)};color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</div><div><div class="tile-t">${esc(it.title)}</div><div class="tile-d">${esc(it.desc||'')}</div></div></a>`;});
+      h+=`</div>`;
+    }
+    if(shorts.length){
+      h+=`<div class="shortcuts">`;
+      shorts.forEach(it=>{h+=`<a class="chip" href="${esc(it.url)}" style="border-color:${hexA(it.color,.35)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<span class="chip-ico" style="color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</span><span class="chip-title">${esc(it.title)}</span></a>`;});
+      h+=`</div>`;
+    }
+    if(!apps.length&&!shorts.length)h+=`<div class="empty">Vide</div>`;
+    h+=`</div>`;
   });
-  if(manageMode)h+=`<button class="mbtn" onclick="addCat()">+ Catégorie</button>`;
+  if(manageMode)h+=`<button class="mbtn add-cat-btn" onclick="addSec('${cat.id}')">+ Section</button>`;
   wrap.innerHTML=h;
 }
+function collectFavs(){const out=[];config.categories.forEach(c=>(c.sections||[]).forEach(s=>(s.items||[]).forEach(it=>{if(it.fav)out.push(it);})));return out;}
+function selectCat(id){currentCat=id;render();window.scrollTo({top:0,behavior:'smooth'});}
 
-// Liens simples (comme l'ancien panel) : pas d'interception JS, sinon iOS
-// ouvre le mini-navigateur. La navigation par défaut du navigateur suffit.
+// Liens simples (pas d'interception JS, sinon iOS ouvre le mini-navigateur).
 
 const findCat=id=>config.categories.find(c=>c.id===id);
 const findSec=(c,s)=>(findCat(c)||{}).sections?.find(x=>x.id===s);
@@ -197,9 +324,10 @@ async function save(){
 }
 function toggleManage(){if(!window.IS_ADMIN)return;manageMode=!manageMode;render();}
 
-async function addCat(){const n=prompt('Nom de la catégorie ?');if(!n)return;config.categories.push({id:uid(),name:n.trim(),sections:[]});render();await save();}
+async function addCat(){const n=prompt('Nom de la catégorie ?');if(!n)return;const ic=prompt('Icône (un emoji, optionnel) :','')||'';const c={id:uid(),name:n.trim(),icon:ic.trim(),sections:[]};config.categories.push(c);currentCat=c.id;render();await save();}
 async function renameCat(id){const c=findCat(id);const n=prompt('Nouveau nom',c.name);if(!n)return;c.name=n.trim();render();await save();}
-async function deleteCat(id){if(!confirm('Supprimer cette catégorie et tout son contenu ?'))return;config.categories=config.categories.filter(c=>c.id!==id);render();await save();}
+async function setCatIcon(id){const c=findCat(id);const ic=prompt('Icône (un emoji, vide = lettre) :',c.icon||'');if(ic===null)return;c.icon=ic.trim();render();await save();}
+async function deleteCat(id){if(!confirm('Supprimer cette catégorie et tout son contenu ?'))return;config.categories=config.categories.filter(c=>c.id!==id);if(currentCat===id)currentCat=(config.categories[0]||{}).id||null;render();await save();}
 async function moveCat(id,d){const a=config.categories,i=a.findIndex(c=>c.id===id),j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];render();await save();}
 async function addSec(c){const n=prompt('Nom de la section ?');if(!n)return;findCat(c).sections.push({id:uid(),name:n.trim(),items:[]});render();await save();}
 async function renameSec(c,s){const x=findSec(c,s);const n=prompt('Nouveau nom',x.name);if(!n)return;x.name=n.trim();render();await save();}
@@ -214,19 +342,20 @@ function openItem(c,s,it,type){
   if(item)type=item.type;editRef.type=type;
   document.getElementById('m-item-title').textContent=(it?'Modifier ':'Ajouter ')+(type==='shortcut'?'un raccourci':'une app');
   document.getElementById('f-desc-field').style.display=type==='shortcut'?'none':'flex';
-  curIcon=item?Object.assign({},item.icon):{kind:'emoji',value:'🔗'};
+  curIcon=item&&item.icon?Object.assign({},item.icon):{kind:'emoji',value:'🔗'};
   document.getElementById('f-title').value=item?item.title:'';
   document.getElementById('f-desc').value=item?(item.desc||''):'';
   document.getElementById('f-url').value=item?item.url:'';
   document.getElementById('f-mdi').value=curIcon.kind==='mdi'?curIcon.value:'';
-  switchTab(curIcon.kind);iprev();setHex((item?item.color:'#e8c547').replace('#',''));
+  document.getElementById('f-fav').checked=item?!!item.fav:false;
+  switchTab(curIcon.kind);iprev();setHex((item&&item.color?item.color:'#e8c547').replace('#',''));
   document.getElementById('m-item').classList.add('open');
 }
 async function saveItem(){
   const title=document.getElementById('f-title').value.trim();let url=document.getElementById('f-url').value.trim();
   if(!title||!url){toast('Nom et lien requis',true);return;}
   if(!/^https?:\/\//i.test(url))url='https://'+url;
-  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,color:'#'+document.getElementById('cp-hex').value};
+  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,color:'#'+document.getElementById('cp-hex').value,fav:document.getElementById('f-fav').checked};
   const sec=findSec(editRef.catId,editRef.secId);
   if(editRef.itemId){const i=sec.items.findIndex(x=>x.id===editRef.itemId);sec.items[i]=data;}else sec.items.push(data);
   render();
@@ -254,9 +383,10 @@ function rgb2hsv(r,g,b){r/=255;g/=255;b/=255;const mx=Math.max(r,g,b),mn=Math.mi
 function rgbHex(r,g,b){return [r,g,b].map(x=>x.toString(16).padStart(2,'0')).join('');}
 
 // Widgets
-function startClock(){const u=()=>{const d=new Date();document.getElementById('w-time').textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});document.getElementById('w-date').textContent=d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});};u();setInterval(u,10000);}
+function startClock(){const u=()=>{const d=new Date();document.getElementById('w-time').textContent=d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});document.getElementById('w-date').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});};u();setInterval(u,10000);}
 const WC={0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'🌨️',75:'❄️',80:'🌦️',81:'🌧️',82:'⛈️',95:'⛈️',96:'⛈️',99:'⛈️'};
-async function loadWeather(){const w=(config.settings||{}).weather;if(!w){document.getElementById('w-emoji').textContent='—';return;}document.getElementById('w-loc').textContent=w.label||'';try{const r=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&current=temperature_2m,weather_code&timezone=auto`)).json();document.getElementById('w-emoji').textContent=WC[r.current.weather_code]||'🌡️';document.getElementById('w-temp').textContent=Math.round(r.current.temperature_2m)+'°';}catch{document.getElementById('w-emoji').textContent='🌡️';}}
+const WL={0:'Ciel clair',1:'Peu nuageux',2:'Nuages épars',3:'Couvert',45:'Brouillard',48:'Brouillard givrant',51:'Bruine',53:'Bruine',55:'Bruine dense',61:'Pluie faible',63:'Pluie',65:'Forte pluie',71:'Neige faible',73:'Neige',75:'Fortes chutes',80:'Averses',81:'Averses',82:'Fortes averses',95:'Orage',96:'Orage & grêle',99:'Orage & grêle'};
+async function loadWeather(){const w=(config.settings||{}).weather;if(!w){document.getElementById('w-emoji').textContent='—';document.getElementById('w-cond').textContent='';return;}document.getElementById('w-loc').textContent=w.label||'';try{const r=await (await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${w.lat}&longitude=${w.lon}&current=temperature_2m,weather_code&timezone=auto`)).json();const c=r.current;document.getElementById('w-emoji').textContent=WC[c.weather_code]||'🌡️';document.getElementById('w-temp').textContent=Math.round(c.temperature_2m)+'°';document.getElementById('w-cond').textContent=WL[c.weather_code]||'';}catch{document.getElementById('w-emoji').textContent='🌡️';document.getElementById('w-temp').textContent='--°';document.getElementById('w-cond').textContent='indisponible';}}
 
 initEmoji();initCP();init();
 </script>
