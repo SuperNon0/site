@@ -4,8 +4,7 @@
   "description": "Hub central super-nono.cc",
   "start_url": "/",
   "scope": "/",
-  "display": "standalone",
-  "orientation": "portrait",
+  "display": "browser",
   "background_color": "#0e0f11",
   "theme_color": "#0e0f11",
   "icons": [
