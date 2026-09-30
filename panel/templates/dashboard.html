@@ -227,7 +227,7 @@
     <div class="field"><label>Nom</label><input type="text" id="f-title" placeholder="Mon app"></div>
     <div class="field" id="f-desc-field"><label>Description</label><input type="text" id="f-desc" placeholder="Courte description…"></div>
     <div class="field"><label>Lien (URL)</label><input type="url" id="f-url" placeholder="https://…"></div>
-    <div class="field"><label>Adresse locale (LAN, optionnel)</label><input type="text" id="f-lan" placeholder="ex : 192.168.0.50:8080"></div>
+    <div class="field" id="f-lan-field"><label>Adresse locale (LAN, optionnel)</label><input type="text" id="f-lan" placeholder="ex : 192.168.0.50:8080"></div>
     <div class="field">
       <label>Couleur d'accent</label>
       <div class="cp-grad" id="cp-grad"><div class="cp-cursor" id="cp-cursor"></div></div>
@@ -433,6 +433,7 @@ function openItem(c,s,it,type){
   if(item)type=item.type;editRef.type=type;
   document.getElementById('m-item-title').textContent=(it?'Modifier ':'Ajouter ')+(type==='shortcut'?'un raccourci':'une app');
   document.getElementById('f-desc-field').style.display=type==='shortcut'?'none':'flex';
+  document.getElementById('f-lan-field').style.display=type==='shortcut'?'none':'flex';
   curIcon=item&&item.icon?Object.assign({},item.icon):{kind:'emoji',value:'🔗'};
   document.getElementById('f-title').value=item?item.title:'';
   document.getElementById('f-desc').value=item?(item.desc||''):'';
@@ -447,7 +448,7 @@ async function saveItem(){
   const title=document.getElementById('f-title').value.trim();let url=document.getElementById('f-url').value.trim();
   if(!title||!url){toast('Nom et lien requis',true);return;}
   if(!/^https?:\/\//i.test(url))url='https://'+url;
-  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,lan:document.getElementById('f-lan').value.trim(),color:'#'+document.getElementById('cp-hex').value,fav:document.getElementById('f-fav').checked};
+  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,lan:editRef.type==='shortcut'?'':document.getElementById('f-lan').value.trim(),color:'#'+document.getElementById('cp-hex').value,fav:document.getElementById('f-fav').checked};
   const sec=findSec(editRef.catId,editRef.secId);
   if(editRef.itemId){const i=sec.items.findIndex(x=>x.id===editRef.itemId);sec.items[i]=data;}else sec.items.push(data);
   render();
