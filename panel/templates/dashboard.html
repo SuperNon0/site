@@ -12,6 +12,7 @@
    page web normale → les apps s'ouvrent sans overlay. #}
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+<script src="{{ url_for('static', filename='bg.js') }}"></script>
 {% raw %}
 <style>
   /* ── Cockpit : rail de catégories + bandeau horloge/météo + tuiles teintées ── */
@@ -123,9 +124,11 @@
   /* MODALS (bottom sheet) */
   .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:500;align-items:flex-end;justify-content:center}
   .overlay.open{display:flex}
-  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:460px;padding:1.2rem 1.4rem calc(2.2rem + env(safe-area-inset-bottom,0px));max-height:92vh;overflow-y:auto}
+  .modal{position:relative;background:var(--card);border:1px solid var(--border);border-radius:20px 20px 0 0;width:100%;max-width:460px;padding:1.2rem 1.4rem calc(2.2rem + env(safe-area-inset-bottom,0px));max-height:92vh;overflow-y:auto}
   @media (min-width:720px){.overlay{align-items:center}.modal{border-radius:20px}}
   .handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto .9rem}
+  .m-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;background:var(--bg);border:1px solid var(--border);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;display:grid;place-items:center;transition:.15s;z-index:3}
+  .m-close:hover{color:var(--danger);border-color:var(--danger)}
   .m-title{font-family:var(--font-serif);font-size:1.2rem;color:var(--accent);margin-bottom:1.1rem}
   .field{display:flex;flex-direction:column;gap:.25rem;margin-bottom:.8rem}
   .field label{font-size:.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
@@ -142,6 +145,10 @@
   .tab{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:8px;font-size:.7rem;padding:.5rem;font-family:var(--font-mono);cursor:pointer}
   .tab.active{border-color:var(--accent);color:var(--accent)}
   .pane{display:none}.pane.active{display:block}
+  .cpane{display:none}.cpane.active{display:block}
+  @keyframes ckUp{from{opacity:0;transform:translateY(9px)}to{opacity:1;transform:none}}
+  .ck-in .tile,.ck-in .fav,.ck-in .chip,.ck-in .band-name,.ck-in .cat-title{animation:ckUp .34s ease both}
+  @media (prefers-reduced-motion:reduce){.ck-in .tile,.ck-in .fav,.ck-in .chip,.ck-in .band-name,.ck-in .cat-title{animation:none}}
   .ipreview{display:flex;align-items:center;gap:.6rem;margin-bottom:.6rem;font-size:1.6rem;min-height:2rem}
   .ipreview .i-img{width:1.8rem;height:1.8rem;object-fit:contain}
   .ipreview .mdi{font-size:1.6rem}
@@ -200,9 +207,10 @@
 </div>
 
 <!-- MODAL ITEM -->
-<div class="overlay" id="m-item" onclick="closeOv(event,'m-item')">
+<div class="overlay" id="m-item">
   <div class="modal">
     <div class="handle"></div>
+    <button class="m-close" type="button" onclick="closeOv(null,'m-item')" aria-label="Fermer">✕</button>
     <div class="m-title" id="m-item-title">Ajouter</div>
     <div class="field">
       <label>Icône</label>
@@ -235,6 +243,27 @@
   </div>
 </div>
 
+<!-- MODAL CATÉGORIE (nom + icône avec liste complète) -->
+<div class="overlay" id="m-cat">
+  <div class="modal">
+    <div class="handle"></div>
+    <button class="m-close" type="button" onclick="closeOv(null,'m-cat')" aria-label="Fermer">✕</button>
+    <div class="m-title" id="m-cat-title">Catégorie</div>
+    <div class="field"><label>Nom</label><input type="text" id="c-name" placeholder="Ex : Infrastructure"></div>
+    <div class="field">
+      <label>Icône</label>
+      <div class="ipreview" id="c-iprev"></div>
+      <div class="tabs">
+        <button class="tab active" data-ctab="emoji" type="button" onclick="cSwitch('emoji')">Emoji</button>
+        <button class="tab" data-ctab="mdi" type="button" onclick="cSwitch('mdi')">Icônes MDI</button>
+      </div>
+      <div class="cpane active" data-cpane="emoji"><div class="ecats" id="c-ecats"></div><div class="egrid" id="c-egrid"></div></div>
+      <div class="cpane" data-cpane="mdi" style="display:none"><input type="text" id="c-mdiq" placeholder="Cherche : serveur, maison, cloud…" oninput="cMdiSearch(this.value)"><div class="egrid" id="c-mdigrid" style="grid-template-columns:repeat(7,1fr)"></div></div>
+    </div>
+    <div class="mrow"><button class="b-cancel" type="button" onclick="closeOv(null,'m-cat')">Annuler</button><button class="b-ok" type="button" onclick="saveCat()">Enregistrer</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -257,8 +286,8 @@ async function init(){
 }
 
 function iconHTML(ic){if(!ic)return'';if(ic.kind==='image')return `<img class="i-img" src="${esc(ic.value)}" alt="">`;if(ic.kind==='mdi')return `<i class="mdi mdi-${esc(ic.value)}"></i>`;return `<span class="i-emoji">${esc(ic.value)}</span>`;}
-function catIcon(cat){if(cat.icon)return `<span class="emoji">${esc(cat.icon)}</span>`;return `<span class="letter">${esc((cat.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;}
-function actionsHTML(c,s,it){return `<div class="item-actions"><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',-1);event.preventDefault();event.stopPropagation()">↑</button><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',1);event.preventDefault();event.stopPropagation()">↓</button><button class="mbtn" onclick="openItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✎</button><button class="mbtn del" onclick="deleteItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✕</button></div>`;}
+function catIcon(cat){const ic=cat.icon;if(ic&&typeof ic==='object')return iconHTML(ic);if(ic)return `<span class="i-emoji">${esc(ic)}</span>`;return `<span class="letter">${esc((cat.name||'?').trim().charAt(0).toUpperCase()||'?')}</span>`;}
+function actionsHTML(c,s,it){return `<div class="item-actions"><button class="mbtn" title="Déplacer avant" onclick="moveItem('${c}','${s}','${it.id}',-1);event.preventDefault();event.stopPropagation()">↑</button><button class="mbtn" title="Déplacer après" onclick="moveItem('${c}','${s}','${it.id}',1);event.preventDefault();event.stopPropagation()">↓</button><button class="mbtn" title="Modifier" onclick="openItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✎</button><button class="mbtn del" title="Supprimer" onclick="deleteItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✕</button></div>`;}
 function hexA(hex,a){hex=(hex||'#e8c547').replace('#','');if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return `rgba(${r||0},${g||0},${b||0},${a})`;}
 
 function render(){renderRail();renderTabbar();renderContent();}
@@ -268,11 +297,11 @@ function renderRail(){
   if(manageMode)h+=`<button class="rail-item add" onclick="addCat()"><span class="ri-ico">＋</span><span class="ri-lbl">Catégorie</span></button>`;
   h+=`</div><div class="rail-admin">`;
   if(window.IS_ADMIN){
-    h+=`<button class="rail-item ${manageMode?'on':''}" onclick="toggleManage()"><span class="ri-ico">✎</span><span class="ri-lbl">${manageMode?'Terminer':'Gérer'}</span></button>`;
-    h+=`<a class="rail-item" href="${window.URLS.params}"><span class="ri-ico">⚙️</span><span class="ri-lbl">Réglages</span></a>`;
+    h+=`<button class="rail-item ${manageMode?'on':''}" title="Activer/quitter le mode édition" onclick="toggleManage()"><span class="ri-ico">✎</span><span class="ri-lbl">${manageMode?'Terminer':'Gérer'}</span></button>`;
+    h+=`<a class="rail-item" title="Paramètres du hub" href="${window.URLS.params}"><span class="ri-ico">⚙️</span><span class="ri-lbl">Réglages</span></a>`;
   }
-  h+=`<a class="rail-item" href="${window.URLS.logout}"><span class="ri-ico">⏻</span><span class="ri-lbl">Sortir</span></a>`;
-  h+=`</div><div class="rail-grip" id="rail-grip"></div>`;
+  h+=`<a class="rail-item" title="Se déconnecter" href="${window.URLS.logout}"><span class="ri-ico">⏻</span><span class="ri-lbl">Sortir</span></a>`;
+  h+=`</div><div class="rail-grip" id="rail-grip" title="Glisse pour élargir/réduire"></div>`;
   document.getElementById('rail').innerHTML=h;
   initGrip();
 }
@@ -297,13 +326,13 @@ function initGrip(){
   const down=e=>{sx=e.touches?e.touches[0].clientX:e.clientX;sw=parseInt(getComputedStyle(appEl()).getPropertyValue('--rail-w'))||84;grip.classList.add('drag');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);if(e.cancelable)e.preventDefault();};
   grip.addEventListener('mousedown',down);grip.addEventListener('touchstart',down,{passive:false});
 }
-function applyBg(){const b=(config.settings&&config.settings.bg)||'dore';document.body.setAttribute('data-bg',b);}
+function applyBg(){const b=(config.settings&&config.settings.bg)||'dore';document.body.setAttribute('data-bg',b);if(window.HubBG)HubBG.set(b);}
 function renderContent(){
   const wrap=document.getElementById('content');
   const cat=findCat(currentCat)||config.categories[0];
   if(!cat){wrap.innerHTML=manageMode?`<button class="mbtn" onclick="addCat()">+ Créer une catégorie</button>`:`<div class="empty">Aucune catégorie pour le moment.</div>`;return;}
   let h=`<div class="cat-bar"><div class="cat-title">${esc(cat.name)}</div>`;
-  if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" onclick="moveCat('${cat.id}',-1)">↑</button><button class="mbtn" onclick="moveCat('${cat.id}',1)">↓</button><button class="mbtn" onclick="renameCat('${cat.id}')">✎ Nom</button><button class="mbtn" onclick="setCatIcon('${cat.id}')">☺ Icône</button><button class="mbtn" onclick="addSec('${cat.id}')">+ Section</button><button class="mbtn del" onclick="deleteCat('${cat.id}')">✕</button></div>`;}
+  if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" title="Monter la catégorie" onclick="moveCat('${cat.id}',-1)">↑</button><button class="mbtn" title="Descendre la catégorie" onclick="moveCat('${cat.id}',1)">↓</button><button class="mbtn" title="Modifier le nom et l'icône" onclick="openCatModal('${cat.id}')">✎ Modifier</button><button class="mbtn" title="Ajouter une section" onclick="addSec('${cat.id}')">+ Section</button><button class="mbtn del" title="Supprimer la catégorie" onclick="deleteCat('${cat.id}')">✕</button></div>`;}
   h+=`</div>`;
 
   if(!manageMode){
@@ -317,24 +346,26 @@ function renderContent(){
 
   (cat.sections||[]).forEach(sec=>{
     h+=`<div class="band"><div class="band-lbl"><div class="band-name">${esc(sec.name)}</div>`;
-    if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'app')">+App</button><button class="mbtn" onclick="openItem('${cat.id}','${sec.id}',null,'shortcut')">+Raccourci</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',-1)">↑</button><button class="mbtn" onclick="moveSec('${cat.id}','${sec.id}',1)">↓</button><button class="mbtn" onclick="renameSec('${cat.id}','${sec.id}')">✎</button><button class="mbtn del" onclick="deleteSec('${cat.id}','${sec.id}')">✕</button></div>`;}
+    if(manageMode){h+=`<div class="manage-btns"><button class="mbtn" title="Ajouter une application (grande tuile)" onclick="openItem('${cat.id}','${sec.id}',null,'app')">+App</button><button class="mbtn" title="Ajouter un raccourci (petite puce)" onclick="openItem('${cat.id}','${sec.id}',null,'shortcut')">+Raccourci</button><button class="mbtn" title="Monter la section" onclick="moveSec('${cat.id}','${sec.id}',-1)">↑</button><button class="mbtn" title="Descendre la section" onclick="moveSec('${cat.id}','${sec.id}',1)">↓</button><button class="mbtn" title="Renommer la section" onclick="renameSec('${cat.id}','${sec.id}')">✎</button><button class="mbtn del" title="Supprimer la section" onclick="deleteSec('${cat.id}','${sec.id}')">✕</button></div>`;}
     h+=`</div>`;
     const apps=(sec.items||[]).filter(i=>i.type!=='shortcut'),shorts=(sec.items||[]).filter(i=>i.type==='shortcut');
     if(apps.length){
       h+=`<div class="tiles">`;
-      apps.forEach(it=>{const bg=`linear-gradient(150deg, ${hexA(it.color,.20)}, var(--card) 82%)`;h+=`<a class="tile" href="${esc(it.url)}" style="background:${bg};border-color:${hexA(it.color,.4)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<div class="tile-ico" style="background:${hexA(it.color,.24)};border:1px solid ${hexA(it.color,.5)};color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</div><div><div class="tile-t">${esc(it.title)}</div><div class="tile-d">${esc(it.desc||'')}</div></div></a>`;});
+      apps.forEach(it=>{const bg=`linear-gradient(150deg, ${hexA(it.color,.20)}, var(--card) 82%)`;h+=`<a class="tile" href="${esc(it.url)}" title="${esc(it.desc||it.title)}" style="background:${bg};border-color:${hexA(it.color,.4)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<div class="tile-ico" style="background:${hexA(it.color,.24)};border:1px solid ${hexA(it.color,.5)};color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</div><div><div class="tile-t">${esc(it.title)}</div><div class="tile-d">${esc(it.desc||'')}</div></div></a>`;});
       h+=`</div>`;
     }
     if(shorts.length){
       h+=`<div class="shortcuts">`;
-      shorts.forEach(it=>{h+=`<a class="chip" href="${esc(it.url)}" style="border-color:${hexA(it.color,.35)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<span class="chip-ico" style="color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</span><span class="chip-title">${esc(it.title)}</span></a>`;});
+      shorts.forEach(it=>{h+=`<a class="chip" href="${esc(it.url)}" title="${esc(it.desc||it.title)}" style="border-color:${hexA(it.color,.35)}" ${manageMode?'onclick="return false"':''}>${manageMode?actionsHTML(cat.id,sec.id,it):''}<span class="chip-ico" style="color:${esc(it.color||'var(--text)')}">${iconHTML(it.icon)}</span><span class="chip-title">${esc(it.title)}</span></a>`;});
       h+=`</div>`;
     }
     if(!apps.length&&!shorts.length)h+=`<div class="empty">Vide</div>`;
     h+=`</div>`;
   });
   if(manageMode)h+=`<button class="mbtn add-cat-btn" onclick="addSec('${cat.id}')">+ Section</button>`;
+  wrap.classList.remove('ck-in');
   wrap.innerHTML=h;
+  if(!manageMode){void wrap.offsetWidth;wrap.classList.add('ck-in');}
 }
 function collectFavs(){const out=[];config.categories.forEach(c=>(c.sections||[]).forEach(s=>(s.items||[]).forEach(it=>{if(it.fav)out.push(it);})));return out;}
 function selectCat(id){currentCat=id;render();window.scrollTo({top:0,behavior:'smooth'});}
@@ -352,9 +383,41 @@ async function save(){
 }
 function toggleManage(){if(!window.IS_ADMIN)return;manageMode=!manageMode;render();}
 
-async function addCat(){const n=prompt('Nom de la catégorie ?');if(!n)return;const ic=prompt('Icône (un emoji, optionnel) :','')||'';const c={id:uid(),name:n.trim(),icon:ic.trim(),sections:[]};config.categories.push(c);currentCat=c.id;render();await save();}
-async function renameCat(id){const c=findCat(id);const n=prompt('Nouveau nom',c.name);if(!n)return;c.name=n.trim();render();await save();}
-async function setCatIcon(id){const c=findCat(id);const ic=prompt('Icône (un emoji, vide = lettre) :',c.icon||'');if(ic===null)return;c.icon=ic.trim();render();await save();}
+// Édition de catégorie via une vraie fenêtre (nom + liste d'icônes).
+let catEdit=null,catIco={kind:'emoji',value:'📁'};
+function openCatModal(id){
+  catEdit=id||null;
+  const c=id?findCat(id):null;
+  document.getElementById('m-cat-title').textContent=id?'Modifier la catégorie':'Nouvelle catégorie';
+  document.getElementById('c-name').value=c?c.name:'';
+  if(c&&c.icon&&typeof c.icon==='object')catIco=Object.assign({},c.icon);
+  else if(c&&c.icon)catIco={kind:'emoji',value:c.icon};
+  else catIco={kind:'emoji',value:'📁'};
+  cSwitch(catIco.kind==='mdi'?'mdi':'emoji');
+  cEmojiInit();cIprev();
+  document.getElementById('c-mdiq').value=catIco.kind==='mdi'?catIco.value:'';
+  document.getElementById('m-cat').classList.add('open');
+}
+function cSwitch(k){
+  document.querySelectorAll('#m-cat .tab').forEach(t=>t.classList.toggle('active',t.dataset.ctab===k));
+  document.querySelectorAll('#m-cat .cpane').forEach(p=>{const on=p.dataset.cpane===k;p.classList.toggle('active',on);p.style.display=on?'block':'none';});
+  if(k==='mdi')cMdiSearch(document.getElementById('c-mdiq').value);
+}
+function cIprev(){document.getElementById('c-iprev').innerHTML=iconHTML(catIco)+'<span style="font-size:.65rem;color:var(--muted)">Aperçu</span>';}
+function cEmojiInit(){document.getElementById('c-ecats').innerHTML=EMOJI.map((c,i)=>`<button type="button" class="ecat${i===0?' active':''}" onclick="cShowEmoji(${i})">${c.l}</button>`).join('');cShowEmoji(0);}
+function cShowEmoji(i){document.querySelectorAll('#c-ecats .ecat').forEach((b,j)=>b.classList.toggle('active',j===i));document.getElementById('c-egrid').innerHTML=[...EMOJI[i].e].map(e=>`<div class="eitem" onclick="cPickEmoji('${e}')">${e}</div>`).join('');}
+function cPickEmoji(e){catIco={kind:'emoji',value:e};cIprev();}
+function cMdiSearch(v){const raw=(v||'').trim().toLowerCase().replace(/^mdi-/,'');if(raw){catIco={kind:'mdi',value:raw};cIprev();}const q=MDI_SYN[raw]||raw;const list=(q?MDI_NAMES.filter(n=>n.includes(q)):MDI_NAMES).slice(0,63);const g=document.getElementById('c-mdigrid');g.innerHTML=list.length?list.map(n=>`<div class="eitem" title="${n}" onclick="cPickMdi('${n}')"><i class="mdi mdi-${n}"></i></div>`).join(''):'<div style="grid-column:1/-1;color:var(--muted);font-size:.7rem;padding:.4rem">Aucune correspondance.</div>';}
+function cPickMdi(n){catIco={kind:'mdi',value:n};document.getElementById('c-mdiq').value=n;cIprev();}
+async function saveCat(){
+  const name=document.getElementById('c-name').value.trim();
+  if(!name){toast('Nom requis',true);return;}
+  if(catEdit){const c=findCat(catEdit);c.name=name;c.icon=Object.assign({},catIco);}
+  else{const c={id:uid(),name,icon:Object.assign({},catIco),sections:[]};config.categories.push(c);currentCat=c.id;}
+  render();
+  if(await save()){closeOv(null,'m-cat');toast(catEdit?'Catégorie modifiée ✓':'Catégorie ajoutée ✓');}
+}
+function addCat(){openCatModal(null);}
 async function deleteCat(id){if(!confirm('Supprimer cette catégorie et tout son contenu ?'))return;config.categories=config.categories.filter(c=>c.id!==id);if(currentCat===id)currentCat=(config.categories[0]||{}).id||null;render();await save();}
 async function moveCat(id,d){const a=config.categories,i=a.findIndex(c=>c.id===id),j=i+d;if(j<0||j>=a.length)return;[a[i],a[j]]=[a[j],a[i]];render();await save();}
 async function addSec(c){const n=prompt('Nom de la section ?');if(!n)return;findCat(c).sections.push({id:uid(),name:n.trim(),items:[]});render();await save();}

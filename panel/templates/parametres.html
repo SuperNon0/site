@@ -7,6 +7,7 @@
 {% block body_class %}has-bg{% endblock %}
 
 {% block head %}
+<script src="{{ url_for('static', filename='bg.js') }}"></script>
 <style>
   .set-wrap{max-width:640px;margin:0 auto;padding:22px 16px 70px}
   .set-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:26px}
@@ -171,11 +172,16 @@
     <div class="fl-card" style="display:flex;flex-direction:column;gap:10px">
       <label class="fl-label" for="bg-select">Fond d'écran</label>
       <select id="bg-select" class="set-select">
-        <option value="dore">Nuit dorée (défaut)</option>
-        <option value="aurore">Aurore (dégradé)</option>
-        <option value="violet">Halo violet</option>
-        <option value="grille">Grille discrète</option>
-        <option value="sobre">Sobre (uni)</option>
+        <optgroup label="Animés">
+          <option value="aurore">Aurore animée ✨</option>
+          <option value="particules">Particules ✨</option>
+          <option value="constellation">Constellation ✨</option>
+        </optgroup>
+        <optgroup label="Statiques">
+          <option value="dore">Nuit dorée (défaut)</option>
+          <option value="grille">Grille discrète</option>
+          <option value="sobre">Sobre (uni)</option>
+        </optgroup>
       </select>
       <span class="access-note" id="bg-status" style="text-align:left;margin:0">Chargement…</span>
     </div>
@@ -219,6 +225,7 @@
     // Apparence
     const cur=hub.settings.bg||'dore';
     sel.value=cur; document.body.setAttribute('data-bg',cur);
+    if(window.HubBG)HubBG.set(cur);
     status.textContent='Appliqué au hub pour tout le monde.';
     // Adresses locales
     const rows=[];
@@ -239,6 +246,7 @@
   sel.addEventListener('change',async()=>{
     if(!hub)return;
     const v=sel.value; document.body.setAttribute('data-bg',v);
+    if(window.HubBG)HubBG.set(v);
     hub.settings=hub.settings||{}; hub.settings.bg=v;
     status.textContent='Enregistrement…';
     try{

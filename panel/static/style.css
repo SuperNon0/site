@@ -615,19 +615,12 @@ body.has-bg {
 }
 /* Variantes de fond, choisies depuis les Paramètres (settings.bg). */
 body.has-bg[data-bg="sobre"] { background: var(--bg); }
-body.has-bg[data-bg="aurore"] {
-  background: linear-gradient(160deg, #0e0f11 0%, #141a20 55%, #0e1113 100%);
-  background-attachment: fixed;
-}
-body.has-bg[data-bg="violet"] {
-  background:
-    radial-gradient(1000px 520px at 80% -10%, rgba(167, 139, 250, 0.12), transparent 60%),
-    radial-gradient(760px 420px at 0% 108%, rgba(232, 197, 71, 0.05), transparent 55%),
-    var(--bg);
-  background-attachment: fixed;
-}
 body.has-bg[data-bg="grille"] {
   background-color: var(--bg);
   background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
   background-size: 22px 22px;
 }
+/* Modes animés (le canvas bg.js dessine par-dessus une base sombre). */
+body.has-bg[data-bg="aurore"] { background: radial-gradient(120% 90% at 50% 120%, #12151b, var(--bg) 70%); }
+body.has-bg[data-bg="particules"],
+body.has-bg[data-bg="constellation"] { background: radial-gradient(120% 90% at 50% -10%, #121319, var(--bg) 65%); }
