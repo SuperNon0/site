@@ -432,7 +432,7 @@ function openItem(c,s,it,type){
   const item=it?findSec(c,s).items.find(x=>x.id===it):null;
   if(item)type=item.type;editRef.type=type;
   document.getElementById('m-item-title').textContent=(it?'Modifier ':'Ajouter ')+(type==='shortcut'?'un raccourci':'une app');
-  document.getElementById('f-desc-field').style.display=type==='shortcut'?'none':'flex';
+  document.getElementById('f-desc-field').style.display='flex';
   document.getElementById('f-lan-field').style.display=type==='shortcut'?'none':'flex';
   curIcon=item&&item.icon?Object.assign({},item.icon):{kind:'emoji',value:'🔗'};
   document.getElementById('f-title').value=item?item.title:'';
