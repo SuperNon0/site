@@ -64,7 +64,26 @@ def parametres():
         impersonating=bool(session.get("impersonator_id")),
         cf=cf_config(),
         diag=cf_diagnostic(),
+        version=_app_version(),
     )
+
+
+def _app_version():
+    """Renvoie {commit, date} du code déployé (via git), pour vérifier les MàJ."""
+    import os
+    import subprocess
+    repo = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    out = {"commit": "?", "date": "?"}
+    try:
+        r = subprocess.run(["git", "-C", repo, "log", "-1", "--format=%h|%cd",
+                            "--date=format:%d/%m %H:%M"],
+                           capture_output=True, text=True, timeout=8)
+        if r.returncode == 0 and "|" in r.stdout:
+            c, d = r.stdout.strip().split("|", 1)
+            out = {"commit": c, "date": d}
+    except Exception:
+        pass
+    return out
 
 
 @bp.route("/parametres/cloudflare", methods=["POST"])
