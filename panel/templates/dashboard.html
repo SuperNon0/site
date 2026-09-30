@@ -405,7 +405,7 @@ function cSwitch(k){
 }
 function cIprev(){document.getElementById('c-iprev').innerHTML=iconHTML(catIco)+'<span style="font-size:.65rem;color:var(--muted)">Aperçu</span>';}
 function cEmojiInit(){document.getElementById('c-ecats').innerHTML=EMOJI.map((c,i)=>`<button type="button" class="ecat${i===0?' active':''}" onclick="cShowEmoji(${i})">${c.l}</button>`).join('');cShowEmoji(0);}
-function cShowEmoji(i){document.querySelectorAll('#c-ecats .ecat').forEach((b,j)=>b.classList.toggle('active',j===i));document.getElementById('c-egrid').innerHTML=[...EMOJI[i].e].map(e=>`<div class="eitem" onclick="cPickEmoji('${e}')">${e}</div>`).join('');}
+function cShowEmoji(i){document.querySelectorAll('#c-ecats .ecat').forEach((b,j)=>b.classList.toggle('active',j===i));document.getElementById('c-egrid').innerHTML=EMOJI[i].e.map(e=>`<div class="eitem" onclick="cPickEmoji('${e}')">${e}</div>`).join('');}
 function cPickEmoji(e){catIco={kind:'emoji',value:e};cIprev();}
 function cMdiSearch(v){const raw=(v||'').trim().toLowerCase().replace(/^mdi-/,'');if(raw){catIco={kind:'mdi',value:raw};cIprev();}const q=MDI_SYN[raw]||raw;const list=(q?MDI_NAMES.filter(n=>n.includes(q)):MDI_NAMES).slice(0,63);const g=document.getElementById('c-mdigrid');g.innerHTML=list.length?list.map(n=>`<div class="eitem" title="${n}" onclick="cPickMdi('${n}')"><i class="mdi mdi-${n}"></i></div>`).join(''):'<div style="grid-column:1/-1;color:var(--muted);font-size:.7rem;padding:.4rem">Aucune correspondance.</div>';}
 function cPickMdi(n){catIco={kind:'mdi',value:n};document.getElementById('c-mdiq').value=n;cIprev();}
@@ -471,10 +471,21 @@ function mdiSearch(v){
 }
 function pickMdi(n){curIcon={kind:'mdi',value:n};document.getElementById('f-mdi').value=n;iprev();}
 async function uploadIcon(inp){const f=inp.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);const r=await fetch('/api/hub/upload',{method:'POST',credentials:'same-origin',body:fd});const j=await r.json();if(!j.ok){toast('Upload échoué',true);return;}curIcon={kind:'image',value:j.url};iprev();toast('Logo chargé ✓');}
-const EMOJI=[{l:'😀',e:'😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😋😎🤓🧐🤔🤗🥳😴🤯😱🥺😭😤😡👍👎👏🙌🙏💪🔥✨⭐💯'},{l:'🏠',e:'🏠🏡🏢🏣🏥🏦🏨🏫🏭🏰🗼🗽⛪🖥️💻⌨️🖱️📱☎️📞📟📠🔋🔌💡🔦🕯️🧯💾💿📀'},{l:'⚙️',e:'⚙️🔧🔨🛠️⛏️🔩🗜️🔗⛓️🧰🧲💣🧨🔪🗡️⚔️🛡️🚪🔑🗝️🔒🔓🔏🔐'},{l:'📊',e:'📊📈📉📋📌📍📎🖇️📏📐✂️🗃️🗄️🗑️📁📂🗂️📅📆📇🖊️✒️📝✏️🔍🔎💰💵💴💶💷💳🧾'},{l:'🎮',e:'🎮🕹️🎲♟️🎯🎳🎰🧩🎨🎬🎤🎧🎼🎹🥁🎷🎺🎸🎻📷📸📹🎥📺📻⚽🏀🏈⚾🎾🏐🏓🏸🏆🥇'},{l:'🚗',e:'🚗🚕🚙🚌🏎️🚓🚑🚒🚐🚚🏍️🛵🚲🚀✈️🚁⛵🚤🚢⚓🚏🚦⛽🗺️🧭🌍🌎🌏'},{l:'❤️',e:'❤️🧡💛💚💙💜🖤🤍🤎💔💕💞💓✅❌⭕✔️➕➖✳️⚠️🚫💠🔷🔶🔴🟠🟡🟢🔵🟣⚫⚪'}];
+const EMOJI=[
+ {l:'😀',e:['😀','😃','😄','😁','😆','😅','🤣','😂','🙂','🙃','😉','😊','😇','🥰','😍','🤩','😘','😋','😜','🤪','😎','🤓','🧐','🤔','🤗','🥳','😴','😌','😔','😞','😟','😢','😭','😤','😠','😡','🤬','😱','😨','😰','😥','🥺','😬','🙄','😏','🤐','🤯','🥶','🥵','🤒','🤕','🤢','🤮','🥴','😷','🤠','👻','💀','👽','🤖','🎃']},
+ {l:'👍',e:['👍','👎','👌','🤌','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','👇','☝️','✋','🤚','🖐️','🖖','👋','🤝','👏','🙌','🙏','💪','🦾','✍️','👀','👁️','🧠','🦿','👣','👤','👥','🧑','👨','👩','🧒','👶','🧓','🤵','👮','🕵️','💂','👷','🧙','🦸','🦹']},
+ {l:'🏠',e:['🏠','🏡','🏘️','🏢','🏣','🏥','🏦','🏨','🏫','🏬','🏭','🏰','🏯','🗼','🗽','⛪','🕌','🛕','🕍','⛩️','🏛️','🏗️','🏚️','🛖','⛺','🏕️','🏞️','🌆','🌃','🌉','🌁','🏙️','🏟️','🏛️','🚪','🪟','🛗','🧱','🏳️','🏴','🚩']},
+ {l:'🖥️',e:['🖥️','💻','⌨️','🖱️','🖲️','🕹️','📱','📲','☎️','📞','📟','📠','🔋','🪫','🔌','💡','🔦','🕯️','🧯','💾','💿','📀','💽','🖨️','🖇️','📷','📸','📹','🎥','📽️','📺','📻','🎙️','🎚️','🎛️','🧮','⏱️','⏲️','⏰','🕰️','📡','🛰️','🔭','🔬','📶','🛜']},
+ {l:'⚙️',e:['⚙️','🔧','🔨','🛠️','⛏️','🪓','🔩','🗜️','🪛','🔗','⛓️','🧰','🧲','🪜','🧪','🧫','🧬','🔫','💣','🧨','🔪','🗡️','⚔️','🛡️','🪝','🧲','🔑','🗝️','🔒','🔓','🔏','🔐','🚪','🪤','🧽','🧴','🪣','🧹','🧺','🧻','🚿','🛁','🚽','🪠','🧯','🛢️']},
+ {l:'📊',e:['📊','📈','📉','📋','📌','📍','📎','🖇️','📏','📐','✂️','🗃️','🗄️','🗑️','📁','📂','🗂️','📅','📆','🗓️','📇','🖊️','🖋️','✒️','🖌️','🖍️','📝','✏️','📖','📚','📓','📔','📒','📕','📗','📘','📙','🔖','🏷️','🔍','🔎','💰','💵','💴','💶','💷','💳','🧾','💸','🪙','📧','📨','📩','📤','📥','📦','📬','✉️']},
+ {l:'🎮',e:['🎮','🕹️','🎲','♟️','🧩','🎯','🎳','🎰','🃏','🀄','🎨','🖼️','🎭','🎬','🎤','🎧','🎼','🎵','🎶','🎹','🥁','🎷','🎺','🎸','🪕','🎻','🪗','⚽','🏀','🏈','⚾','🥎','🎾','🏐','🏉','🥏','🎱','🏓','🏸','🥅','🏒','🏑','🥍','🏏','⛳','🏹','🎣','🥊','🥋','⛸️','🛹','🛼','🛷','⛷️','🏂','🏆','🥇','🥈','🥉','🏅','🎖️']},
+ {l:'🍔',e:['🍔','🍟','🍕','🌭','🥪','🌮','🌯','🥙','🧆','🥚','🍳','🥘','🍲','🥗','🍿','🧈','🧂','🥫','🍱','🍛','🍜','🍝','🍠','🍣','🍤','🍚','🍙','🥟','🦪','🍦','🍩','🍪','🎂','🍰','🧁','🥧','🍫','🍬','🍭','🍮','🍯','🍎','🍌','🍇','🍓','🫐','🍉','🍊','🥑','🍅','🥕','🌽','🥔','🍄','🫖','☕','🍵','🍺','🍷','🥂','🍸']},
+ {l:'🚗',e:['🚗','🚕','🚙','🚌','🚎','🏎️','🚓','🚑','🚒','🚐','🛻','🚚','🚛','🚜','🏍️','🛵','🚲','🛴','🛼','🚀','🛸','✈️','🛩️','🚁','🚂','🚄','🚅','🚆','🚇','🚊','🚉','⛵','🚤','🛥️','🚢','⚓','⛽','🚏','🚦','🚥','🗺️','🧭','🏔️','⛰️','🌋','🏕️','🏖️','🏝️','🌍','🌎','🌏','🌐','⭐','🌟','☀️','🌤️','⛅','☁️','🌧️','⛈️','❄️','🔥','💧','🌈','🌙']},
+ {l:'❤️',e:['❤️','🧡','💛','💚','💙','💜','🖤','🤍','🤎','💔','❤️‍🔥','💕','💞','💓','💗','💖','💘','💝','💟','✅','☑️','✔️','❌','❎','⭕','➕','➖','➗','✳️','✴️','❇️','⚠️','🚫','⛔','📛','🔰','💠','🔱','🔺','🔻','🔷','🔶','🔸','🔹','🔴','🟠','🟡','🟢','🔵','🟣','🟤','⚫','⚪','🟥','🟧','🟨','🟩','🟦','🟪','⬛','⬜']}
+];
 let curEcat=0;
 function initEmoji(){document.getElementById('ecats').innerHTML=EMOJI.map((c,i)=>`<button class="ecat${i===0?' active':''}" onclick="showEmoji(${i})">${c.l}</button>`).join('');showEmoji(0);}
-function showEmoji(i){curEcat=i;document.querySelectorAll('.ecat').forEach((b,j)=>b.classList.toggle('active',j===i));document.getElementById('egrid').innerHTML=[...EMOJI[i].e].map(e=>`<div class="eitem" onclick="pickEmoji('${e}')">${e}</div>`).join('');}
+function showEmoji(i){curEcat=i;document.querySelectorAll('#ecats .ecat').forEach((b,j)=>b.classList.toggle('active',j===i));document.getElementById('egrid').innerHTML=EMOJI[i].e.map(e=>`<div class="eitem" onclick="pickEmoji('${e}')">${e}</div>`).join('');}
 function pickEmoji(e){curIcon={kind:'emoji',value:e};iprev();}
 const PRESETS=['#e8c547','#4fc3a1','#a78bfa','#e87c47','#5bc4e8','#e85c47','#f472b6','#34d399','#60a5fa','#fb923c','#a3e635','#ffffff'];
 let cpH=45,cpS=70,cpV=80;
