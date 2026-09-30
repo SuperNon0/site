@@ -599,3 +599,35 @@ code {
   border-radius: 4px;
   padding: 1px 5px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Fond enrichi — appliqué aux écrans applicatifs (hub, paramètres) via la
+   classe body `.has-bg`. Purement additif : n'altère aucun token ni aucune
+   règle existante, et les écrans d'auth (sans la classe) gardent le fond plat
+   des maquettes. Les teintes proviennent de la palette (--accent, --accent-2).
+   ───────────────────────────────────────────────────────────────────────── */
+body.has-bg {
+  background:
+    radial-gradient(1100px 520px at 82% -12%, rgba(232, 197, 71, 0.06), transparent 60%),
+    radial-gradient(820px 460px at -6% 108%, rgba(79, 195, 161, 0.05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+/* Variantes de fond, choisies depuis les Paramètres (settings.bg). */
+body.has-bg[data-bg="sobre"] { background: var(--bg); }
+body.has-bg[data-bg="aurore"] {
+  background: linear-gradient(160deg, #0e0f11 0%, #141a20 55%, #0e1113 100%);
+  background-attachment: fixed;
+}
+body.has-bg[data-bg="violet"] {
+  background:
+    radial-gradient(1000px 520px at 80% -10%, rgba(167, 139, 250, 0.12), transparent 60%),
+    radial-gradient(760px 420px at 0% 108%, rgba(232, 197, 71, 0.05), transparent 55%),
+    var(--bg);
+  background-attachment: fixed;
+}
+body.has-bg[data-bg="grille"] {
+  background-color: var(--bg);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 22px 22px;
+}

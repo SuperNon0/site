@@ -4,6 +4,7 @@
 
 {# Le hub « Cockpit » a son propre en-tête (rail + bandeau) : on retire la topbar de base. #}
 {% block topbar %}{% endblock %}
+{% block body_class %}has-bg{% endblock %}
 
 {% block head %}
 {# Volontairement PAS de mode PWA « standalone » : ce mode fait ouvrir les liens
@@ -16,15 +17,22 @@
   /* ── Cockpit : rail de catégories + bandeau horloge/météo + tuiles teintées ── */
   .app{
     display:flex;align-items:flex-start;min-height:100vh;min-height:100dvh;
+    --rail-w:84px;
     --line-soft:#20242a;--muted-2:#5f646c;
     --accent-soft:rgba(232,197,71,.14);--accent-line:rgba(232,197,71,.4);
   }
 
   /* RAIL (desktop) */
-  .rail{position:sticky;top:0;height:100vh;height:100dvh;width:84px;flex:none;background:var(--surface);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;align-items:center;gap:5px;padding:16px 0;overflow-y:auto;scrollbar-width:none}
+  .rail{position:sticky;top:0;height:100vh;height:100dvh;width:var(--rail-w);flex:none;background:var(--surface);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none}
   .rail::-webkit-scrollbar{display:none}
-  .rail-logo{font-family:var(--font-serif);color:var(--accent);font-size:24px;margin-bottom:12px}
-  .rail-item{width:64px;padding:9px 2px;border:none;background:none;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);position:relative;cursor:pointer;transition:color .15s,background .15s}
+  .rail-logo{font-family:var(--font-serif);color:var(--accent);font-size:24px;margin-bottom:8px;flex:none}
+  .rail-cats{display:flex;flex-direction:column;align-items:center;gap:5px;width:100%}
+  .rail-admin{margin-top:auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:100%;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .rail-grip{position:absolute;top:0;right:0;width:8px;height:100%;cursor:col-resize;z-index:30;touch-action:none}
+  .rail-grip::after{content:"";position:absolute;top:50%;right:1px;transform:translateY(-50%);width:3px;height:36px;border-radius:2px;background:var(--border);transition:background .2s}
+  .rail-grip:hover::after,.rail-grip.drag::after{background:var(--accent)}
+  .app[data-rail="narrow"] .ri-lbl{display:none}
+  .rail-item{width:calc(var(--rail-w) - 20px);max-width:96px;padding:9px 2px;border:none;background:none;border-radius:var(--radius-sm);display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--muted);position:relative;cursor:pointer;transition:color .15s,background .15s;text-align:center}
   .rail-item .ri-ico{font-size:20px;line-height:1}
   .rail-item .ri-ico .letter{font-family:var(--font-serif)}
   .rail-item .ri-lbl{font-size:8.5px;letter-spacing:.4px;max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-transform:uppercase}
@@ -95,8 +103,9 @@
   .empty{font-size:12px;color:var(--muted-2);font-style:italic;padding:6px 0}
 
   /* TABBAR (mobile) */
-  .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--surface);border-top:1px solid var(--line-soft);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));justify-content:space-around;gap:2px}
-  .tab-item{flex:1;min-width:0;border:none;background:none;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;border-radius:8px;cursor:pointer}
+  .tabbar{display:none;position:fixed;left:0;right:0;bottom:0;z-index:100;background:var(--surface);border-top:1px solid var(--line-soft);padding:8px 6px calc(8px + env(safe-area-inset-bottom,0px));justify-content:space-between;gap:2px;overflow-x:auto;scrollbar-width:none}
+  .tabbar::-webkit-scrollbar{display:none}
+  .tab-item{flex:1 0 auto;min-width:52px;border:none;background:none;color:var(--muted);text-decoration:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 2px;border-radius:8px;cursor:pointer}
   .tab-item .ti-ico{font-size:19px;line-height:1}
   .tab-item .ti-ico .letter{font-family:var(--font-serif)}
   .tab-item .ti-lbl{font-size:8px;text-transform:uppercase;letter-spacing:.3px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -173,13 +182,6 @@
         <div class="ck-date" id="w-date">—</div>
       </div>
       <div class="hero-r">
-        <div class="admin">
-          {% if is_super_admin %}
-          <button class="ck-lnk" id="manage-lnk" onclick="toggleManage()">Gérer</button>
-          <a class="ck-lnk" href="{{ url_for('accounts.parametres') }}">Paramètres</a>
-          {% endif %}
-          <a class="ck-lnk" href="{{ url_for('auth.logout') }}">Déconnexion</a>
-        </div>
         <div class="wx">
           <div class="wx-emoji" id="w-emoji">⏳</div>
           <div>
@@ -212,11 +214,12 @@
       </div>
       <div class="pane active" data-pane="emoji"><div class="ecats" id="ecats"></div><div class="egrid" id="egrid"></div></div>
       <div class="pane" data-pane="image"><input type="file" id="f-file" accept="image/*" onchange="uploadIcon(this)"><div style="font-size:.58rem;color:var(--muted);margin-top:.3rem">PNG/SVG carré conseillé (max 2 Mo).</div></div>
-      <div class="pane" data-pane="mdi"><input type="text" id="f-mdi" placeholder="ex : server, home-automation…" oninput="previewMdi(this.value)"><div style="font-size:.58rem;color:var(--muted);margin-top:.3rem">Nom d'icône Material Design (sans mdi-).</div></div>
+      <div class="pane" data-pane="mdi"><input type="text" id="f-mdi" placeholder="Cherche : serveur, maison, cloud…" oninput="mdiSearch(this.value)"><div class="egrid" id="mdi-grid" style="grid-template-columns:repeat(7,1fr)"></div><div style="font-size:.58rem;color:var(--muted);margin-top:.3rem">Tape un mot puis choisis l'icône (nom Material Design).</div></div>
     </div>
     <div class="field"><label>Nom</label><input type="text" id="f-title" placeholder="Mon app"></div>
     <div class="field" id="f-desc-field"><label>Description</label><input type="text" id="f-desc" placeholder="Courte description…"></div>
     <div class="field"><label>Lien (URL)</label><input type="url" id="f-url" placeholder="https://…"></div>
+    <div class="field"><label>Adresse locale (LAN, optionnel)</label><input type="text" id="f-lan" placeholder="ex : 192.168.0.50:8080"></div>
     <div class="field">
       <label>Couleur d'accent</label>
       <div class="cp-grad" id="cp-grad"><div class="cp-cursor" id="cp-cursor"></div></div>
@@ -234,7 +237,10 @@
 
 <div class="toast" id="toast"></div>
 
-<script>window.IS_ADMIN = {{ 'true' if is_super_admin else 'false' }};</script>
+<script>
+window.IS_ADMIN = {{ 'true' if is_super_admin else 'false' }};
+window.URLS = { params: "{{ url_for('accounts.parametres') }}", logout: "{{ url_for('auth.logout') }}" };
+</script>
 {% raw %}
 <script>
 let config={settings:{},categories:[]},manageMode=false,currentCat=null,editRef=null,curIcon={kind:'emoji',value:'🔗'};
@@ -243,8 +249,10 @@ const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 function toast(m,e){const t=document.getElementById('toast');t.textContent=m;t.style.background=e?'var(--danger)':'var(--accent)';t.style.color=e?'#fff':'#0e0f11';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
 
 async function init(){
+  applyRailWidth();
   config=await (await fetch('/api/hub',{credentials:'same-origin'})).json();
   if(!currentCat||!findCat(currentCat))currentCat=(config.categories[0]||{}).id||null;
+  applyBg();
   render();startClock();loadWeather();
 }
 
@@ -253,23 +261,43 @@ function catIcon(cat){if(cat.icon)return `<span class="emoji">${esc(cat.icon)}</
 function actionsHTML(c,s,it){return `<div class="item-actions"><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',-1);event.preventDefault();event.stopPropagation()">↑</button><button class="mbtn" onclick="moveItem('${c}','${s}','${it.id}',1);event.preventDefault();event.stopPropagation()">↓</button><button class="mbtn" onclick="openItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✎</button><button class="mbtn del" onclick="deleteItem('${c}','${s}','${it.id}');event.preventDefault();event.stopPropagation()">✕</button></div>`;}
 function hexA(hex,a){hex=(hex||'#e8c547').replace('#','');if(hex.length===3)hex=hex.split('').map(x=>x+x).join('');const r=parseInt(hex.slice(0,2),16),g=parseInt(hex.slice(2,4),16),b=parseInt(hex.slice(4,6),16);return `rgba(${r||0},${g||0},${b||0},${a})`;}
 
-function render(){
-  const ml=document.getElementById('manage-lnk');
-  if(ml){ml.classList.toggle('active',manageMode);ml.textContent=manageMode?'Terminer':'Gérer';}
-  renderRail();renderTabbar();renderContent();
-}
+function render(){renderRail();renderTabbar();renderContent();}
 function renderRail(){
-  let h=`<div class="rail-logo">◆</div>`;
+  let h=`<div class="rail-logo">◆</div><div class="rail-cats">`;
   config.categories.forEach(cat=>{h+=`<button class="rail-item ${cat.id===currentCat?'on':''}" onclick="selectCat('${cat.id}')" title="${esc(cat.name)}"><span class="ri-ico">${catIcon(cat)}</span><span class="ri-lbl">${esc(cat.name)}</span></button>`;});
-  if(manageMode)h+=`<button class="rail-item add" onclick="addCat()"><span class="ri-ico">＋</span><span class="ri-lbl">Cat.</span></button>`;
+  if(manageMode)h+=`<button class="rail-item add" onclick="addCat()"><span class="ri-ico">＋</span><span class="ri-lbl">Catégorie</span></button>`;
+  h+=`</div><div class="rail-admin">`;
+  if(window.IS_ADMIN){
+    h+=`<button class="rail-item ${manageMode?'on':''}" onclick="toggleManage()"><span class="ri-ico">✎</span><span class="ri-lbl">${manageMode?'Terminer':'Gérer'}</span></button>`;
+    h+=`<a class="rail-item" href="${window.URLS.params}"><span class="ri-ico">⚙️</span><span class="ri-lbl">Réglages</span></a>`;
+  }
+  h+=`<a class="rail-item" href="${window.URLS.logout}"><span class="ri-ico">⏻</span><span class="ri-lbl">Sortir</span></a>`;
+  h+=`</div><div class="rail-grip" id="rail-grip"></div>`;
   document.getElementById('rail').innerHTML=h;
+  initGrip();
 }
 function renderTabbar(){
   let h='';
   config.categories.forEach(cat=>{h+=`<button class="tab-item ${cat.id===currentCat?'on':''}" onclick="selectCat('${cat.id}')"><span class="ti-ico">${catIcon(cat)}</span><span class="ti-lbl">${esc(cat.name)}</span></button>`;});
   if(manageMode)h+=`<button class="tab-item" onclick="addCat()"><span class="ti-ico">＋</span><span class="ti-lbl">Cat.</span></button>`;
+  if(window.IS_ADMIN){
+    h+=`<button class="tab-item ${manageMode?'on':''}" onclick="toggleManage()"><span class="ti-ico">✎</span><span class="ti-lbl">Gérer</span></button>`;
+    h+=`<a class="tab-item" href="${window.URLS.params}"><span class="ti-ico">⚙️</span><span class="ti-lbl">Réglages</span></a>`;
+  }
+  h+=`<a class="tab-item" href="${window.URLS.logout}"><span class="ti-ico">⏻</span><span class="ti-lbl">Sortir</span></a>`;
   document.getElementById('tabbar').innerHTML=h;
 }
+function appEl(){return document.querySelector('.app');}
+function applyRailWidth(){try{const w=localStorage.getItem('ck_rail_w');if(w){appEl().style.setProperty('--rail-w',w);appEl().setAttribute('data-rail',parseInt(w)<78?'narrow':'wide');}}catch(e){}}
+function initGrip(){
+  const grip=document.getElementById('rail-grip');if(!grip)return;
+  let sx=0,sw=84;
+  const move=e=>{const x=e.touches?e.touches[0].clientX:e.clientX;let w=Math.max(64,Math.min(190,sw+(x-sx)));appEl().style.setProperty('--rail-w',w+'px');appEl().setAttribute('data-rail',w<78?'narrow':'wide');if(e.cancelable)e.preventDefault();};
+  const up=()=>{grip.classList.remove('drag');document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);try{localStorage.setItem('ck_rail_w',getComputedStyle(appEl()).getPropertyValue('--rail-w').trim());}catch(e){}};
+  const down=e=>{sx=e.touches?e.touches[0].clientX:e.clientX;sw=parseInt(getComputedStyle(appEl()).getPropertyValue('--rail-w'))||84;grip.classList.add('drag');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);if(e.cancelable)e.preventDefault();};
+  grip.addEventListener('mousedown',down);grip.addEventListener('touchstart',down,{passive:false});
+}
+function applyBg(){const b=(config.settings&&config.settings.bg)||'dore';document.body.setAttribute('data-bg',b);}
 function renderContent(){
   const wrap=document.getElementById('content');
   const cat=findCat(currentCat)||config.categories[0];
@@ -346,6 +374,7 @@ function openItem(c,s,it,type){
   document.getElementById('f-title').value=item?item.title:'';
   document.getElementById('f-desc').value=item?(item.desc||''):'';
   document.getElementById('f-url').value=item?item.url:'';
+  document.getElementById('f-lan').value=item?(item.lan||''):'';
   document.getElementById('f-mdi').value=curIcon.kind==='mdi'?curIcon.value:'';
   document.getElementById('f-fav').checked=item?!!item.fav:false;
   switchTab(curIcon.kind);iprev();setHex((item&&item.color?item.color:'#e8c547').replace('#',''));
@@ -355,7 +384,7 @@ async function saveItem(){
   const title=document.getElementById('f-title').value.trim();let url=document.getElementById('f-url').value.trim();
   if(!title||!url){toast('Nom et lien requis',true);return;}
   if(!/^https?:\/\//i.test(url))url='https://'+url;
-  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,color:'#'+document.getElementById('cp-hex').value,fav:document.getElementById('f-fav').checked};
+  const data={id:editRef.itemId||uid(),type:editRef.type,icon:curIcon,title,desc:document.getElementById('f-desc').value.trim(),url,lan:document.getElementById('f-lan').value.trim(),color:'#'+document.getElementById('cp-hex').value,fav:document.getElementById('f-fav').checked};
   const sec=findSec(editRef.catId,editRef.secId);
   if(editRef.itemId){const i=sec.items.findIndex(x=>x.id===editRef.itemId);sec.items[i]=data;}else sec.items.push(data);
   render();
@@ -364,9 +393,20 @@ async function saveItem(){
 function closeOv(e,id){if(e&&e.target!==document.getElementById(id))return;document.getElementById(id).classList.remove('open');}
 
 // Icon picker
-function switchTab(k){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===k));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===k));}
+function switchTab(k){document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===k));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('active',p.dataset.pane===k));if(k==='mdi')mdiSearch(document.getElementById('f-mdi').value);}
 function iprev(){document.getElementById('ipreview').innerHTML=iconHTML(curIcon)+'<span style="font-size:.65rem;color:var(--muted)">Aperçu</span>';}
-function previewMdi(v){curIcon={kind:'mdi',value:v.trim().replace(/^mdi-/,'')};iprev();}
+// Recherche d'icônes MDI : quelques centaines de noms courants + synonymes FR.
+const MDI_SYN={maison:'home',accueil:'home',serveur:'server',reseau:'network',reglage:'cog',reglages:'cog',parametres:'cog',dossier:'folder',fichier:'file',nuage:'cloud',telecharger:'download',televerser:'upload',cadenas:'lock',cle:'key',bouclier:'shield',graphique:'chart-line',argent:'cash',voiture:'car',carburant:'fuel',essence:'fuel',recette:'chef-hat',cuisine:'chef-hat',musique:'music',video:'video',camera:'camera',photo:'camera',calendrier:'calendar',courriel:'email',mail:'email',message:'message',jeu:'gamepad-variant',manette:'gamepad-variant',meteo:'weather-partly-cloudy',lien:'link',web:'web',ecran:'monitor',outil:'wrench',outils:'toolbox',cloche:'bell',compte:'account',utilisateur:'account',energie:'power',demarrer:'power',base:'database',donnees:'database',pdf:'file-pdf-box',image:'image',telephone:'phone',robot:'robot',horloge:'clock',television:'television',film:'movie',livre:'book',note:'note-text',crayon:'pencil',poubelle:'delete',recherche:'magnify',maisonauto:'home-automation'};
+const MDI_NAMES=['home','home-automation','home-assistant','view-dashboard','server','server-network','nas','router-network','lan','ip-network','network','web','earth','cloud','cloud-outline','cog','cog-outline','tune','wrench','toolbox','hammer-wrench','database','harddisk','folder','folder-network','file','file-document','file-pdf-box','download','upload','sync','backup-restore','shield','shield-lock','shield-check','lock','lock-open','key','key-variant','account','account-group','account-circle','account-key','bell','bell-ring','chart-line','chart-bar','chart-areaspline','finance','cash','cash-multiple','currency-eur','currency-usd','credit-card','wallet','calculator','car','car-hatchback','fuel','gas-station','ev-station','chef-hat','silverware-fork-knife','food','pot-steam','cupcake','coffee','music','music-note','playlist-music','video','movie','movie-open','youtube','camera','image','image-multiple','palette','brush','calendar','calendar-month','calendar-check','clock','clock-outline','timer','email','email-outline','message','message-text','chat','forum','discord','microsoft-teams','slack','telegram','whatsapp','phone','cellphone','tablet','monitor','monitor-dashboard','laptop','desktop-tower','cpu-64-bit','memory','raspberry-pi','usb','wifi','access-point','remote','power','power-plug','restart','play','pause','stop','gamepad-variant','controller-classic','microsoft-xbox','sony-playstation','nintendo-switch','minecraft','dice-5','puzzle','robot','robot-happy','brain','flask','test-tube','rocket-launch','bug','code-tags','xml','git','github','gitlab','docker','language-python','language-javascript','nodejs','application','application-cog','apps','widgets','view-grid','shape','star','heart','bookmark','tag','flag','map','map-marker','compass','navigation','weather-sunny','weather-night','weather-partly-cloudy','weather-cloudy','weather-rainy','weather-snowy','weather-lightning','thermometer','water','fire','leaf','tree','flower','paw','dog','cat','link','link-variant','share-variant','magnify','filter','sort','pencil','note-text','notebook','clipboard-text','format-list-bulleted','check','check-circle','close','plus','minus','delete','trash-can','archive','inbox','send','printer','scanner','barcode','qrcode','key-chain','safe','doorbell-video','cctv','lightbulb','lightbulb-on','led-strip','television','television-classic','remote-tv','speaker','headphones','volume-high','battery','battery-charging','solar-power','lan-connect','vpn','dns','firewall','shield-home','account-lock','bookmark-multiple','folder-multiple','cloud-download','cloud-upload','sync-circle','update','information','help-circle','alert','cog-sync','account-cog','store','cart','package-variant','truck-delivery','gift','ticket','newspaper','rss','link-box','bookshelf','school','briefcase','office-building','warehouse','factory'];
+function mdiSearch(v){
+  const raw=(v||'').trim().toLowerCase().replace(/^mdi-/,'');
+  if(raw){curIcon={kind:'mdi',value:raw};iprev();}
+  const q=MDI_SYN[raw]||raw;
+  const list=(q?MDI_NAMES.filter(n=>n.includes(q)):MDI_NAMES).slice(0,63);
+  const grid=document.getElementById('mdi-grid');
+  grid.innerHTML=list.length?list.map(n=>`<div class="eitem" title="${n}" onclick="pickMdi('${n}')"><i class="mdi mdi-${n}"></i></div>`).join(''):'<div style="grid-column:1/-1;color:var(--muted);font-size:.7rem;padding:.4rem">Aucune correspondance — tape le nom exact.</div>';
+}
+function pickMdi(n){curIcon={kind:'mdi',value:n};document.getElementById('f-mdi').value=n;iprev();}
 async function uploadIcon(inp){const f=inp.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);const r=await fetch('/api/hub/upload',{method:'POST',credentials:'same-origin',body:fd});const j=await r.json();if(!j.ok){toast('Upload échoué',true);return;}curIcon={kind:'image',value:j.url};iprev();toast('Logo chargé ✓');}
 const EMOJI=[{l:'😀',e:'😀😃😄😁😆😅🤣😂🙂🙃😉😊😇🥰😍🤩😘😋😎🤓🧐🤔🤗🥳😴🤯😱🥺😭😤😡👍👎👏🙌🙏💪🔥✨⭐💯'},{l:'🏠',e:'🏠🏡🏢🏣🏥🏦🏨🏫🏭🏰🗼🗽⛪🖥️💻⌨️🖱️📱☎️📞📟📠🔋🔌💡🔦🕯️🧯💾💿📀'},{l:'⚙️',e:'⚙️🔧🔨🛠️⛏️🔩🗜️🔗⛓️🧰🧲💣🧨🔪🗡️⚔️🛡️🚪🔑🗝️🔒🔓🔏🔐'},{l:'📊',e:'📊📈📉📋📌📍📎🖇️📏📐✂️🗃️🗄️🗑️📁📂🗂️📅📆📇🖊️✒️📝✏️🔍🔎💰💵💴💶💷💳🧾'},{l:'🎮',e:'🎮🕹️🎲♟️🎯🎳🎰🧩🎨🎬🎤🎧🎼🎹🥁🎷🎺🎸🎻📷📸📹🎥📺📻⚽🏀🏈⚾🎾🏐🏓🏸🏆🥇'},{l:'🚗',e:'🚗🚕🚙🚌🏎️🚓🚑🚒🚐🚚🏍️🛵🚲🚀✈️🚁⛵🚤🚢⚓🚏🚦⛽🗺️🧭🌍🌎🌏'},{l:'❤️',e:'❤️🧡💛💚💙💜🖤🤍🤎💔💕💞💓✅❌⭕✔️➕➖✳️⚠️🚫💠🔷🔶🔴🟠🟡🟢🔵🟣⚫⚪'}];
 let curEcat=0;

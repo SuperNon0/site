@@ -1,15 +1,52 @@
 {% extends "base.html" %}
 {% block title %}Paramètres — {{ brand.prefix }}{{ brand.suffix }}{% endblock %}
 {% block badge %}paramètres{% endblock %}
-{% block content %}
-<div class="acct-wrap" style="max-width:560px">
 
-  <div style="margin-bottom:14px">
-    <a href="{{ url_for('main.dashboard') }}" class="btn ghost small">← Retour au hub</a>
-  </div>
+{# En-tête propre à la page (raccord avec le hub Cockpit) : on retire la topbar de base. #}
+{% block topbar %}{% endblock %}
+{% block body_class %}has-bg{% endblock %}
+
+{% block head %}
+<style>
+  .set-wrap{max-width:640px;margin:0 auto;padding:22px 16px 70px}
+  .set-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:26px}
+  .set-head .b-back{order:1}
+  .set-head .b-out{order:2;margin-left:auto}
+  .set-titles{order:3;flex:1 1 100%;margin-top:12px}
+  .set-title{font-family:var(--font-serif);font-size:clamp(26px,5vw,34px);color:var(--accent);line-height:1}
+  .set-sub{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.14em;margin-top:8px}
+  .set-section{margin-bottom:22px}
+  .set-section > h3{display:flex;align-items:center;gap:10px;font-family:var(--font-serif);font-weight:400;font-size:1.15rem;color:var(--text);margin:0 0 10px}
+  .set-section > h3::before{content:"";width:4px;height:1.05em;border-radius:2px;background:var(--accent);flex:none}
+  .diag-grid{display:flex;flex-direction:column;gap:7px;font-size:.75rem}
+  .diag-grid > div{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--border);padding-bottom:6px}
+  .diag-grid > div:last-child{border-bottom:none;padding-bottom:0}
+  .set-select{background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:var(--font-mono);font-size:.85rem;padding:.6rem .7rem;width:100%;outline:none}
+  .set-select:focus{border-color:var(--accent)}
+  .lan-list{display:flex;flex-direction:column;gap:8px}
+  .lan-row{display:flex;align-items:center;gap:10px;font-size:.78rem;border-bottom:1px dashed var(--border);padding-bottom:8px}
+  .lan-row:last-child{border-bottom:none;padding-bottom:0}
+  .lan-dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .lan-name{font-family:var(--font-serif);font-size:.95rem}
+  .lan-ip{margin-left:auto;color:var(--accent);text-align:right;word-break:break-all}
+  .lan-ip.none{color:var(--muted)}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="set-wrap">
+
+  <header class="set-head">
+    <a href="{{ url_for('main.dashboard') }}" class="btn ghost small b-back">← Hub</a>
+    <a href="{{ url_for('auth.logout') }}" class="btn ghost small b-out">Déconnexion</a>
+    <div class="set-titles">
+      <div class="set-title">Paramètres</div>
+      <div class="set-sub">{{ brand.prefix }}{{ brand.suffix }} · administration</div>
+    </div>
+  </header>
 
   <!-- ---------------------------------------- mot de passe administrateur -->
-  <section class="acct-section">
+  <section class="set-section">
     <h3>Mot de passe administrateur</h3>
     <div class="fl-card">
       {% if impersonating %}
@@ -51,7 +88,7 @@
   </section>
 
   <!-- ------------------------------------------------ Cloudflare / accès -->
-  <section class="acct-section">
+  <section class="set-section">
     <h3>Cloudflare / Accès (Zero Trust)</h3>
     <div class="fl-card">
       {% if impersonating %}
@@ -91,33 +128,32 @@
   </section>
 
   <!-- ----------------------------------------------- diagnostic Cloudflare -->
-  <section class="acct-section">
+  <section class="set-section">
     <h3>Diagnostic Cloudflare</h3>
     <div class="fl-card" style="text-align:left">
       <p class="access-note" style="text-align:left;margin:0 0 10px">
         État réel selon <b>la façon dont tu ouvres cette page</b> (par le domaine
         via Cloudflare, ou en local par IP).
       </p>
-      <div style="display:flex;flex-direction:column;gap:6px;font-size:.75rem">
-        <div>Jeton Cloudflare reçu :
+      <div class="diag-grid">
+        <div><span>Jeton Cloudflare reçu</span>
           <b style="color:{{ 'var(--green)' if diag.has_token else 'var(--danger)' }}">{{ 'oui' if diag.has_token else 'non' }}</b></div>
-        <div>En-tête e-mail : <b style="color:var(--text)">{{ diag.header_email or '—' }}</b></div>
-        <div>Équipe configurée : <b style="color:var(--text)">{{ diag.team or '—' }}</b></div>
-        <div>AUD configuré : <b style="color:var(--text)">{{ (diag.aud[:12] ~ '…') if diag.aud else '—' }}</b></div>
-        <div>Vérification JWT : <b style="color:var(--text)">{{ 'activée' if diag.verify else 'désactivée' }}</b></div>
-        <div>Résultat vérif JWT :
-          <b style="color:{{ 'var(--green)' if diag.jwt_status.startswith('OK') else ('var(--danger)' if 'échec' in diag.jwt_status else 'var(--muted)') }}">{{ diag.jwt_status }}</b>
-          {% if diag.jwt_email %}→ {{ diag.jwt_email }}{% endif %}
+        <div><span>En-tête e-mail</span> <b style="color:var(--text)">{{ diag.header_email or '—' }}</b></div>
+        <div><span>Équipe configurée</span> <b style="color:var(--text)">{{ diag.team or '—' }}</b></div>
+        <div><span>AUD configuré</span> <b style="color:var(--text)">{{ (diag.aud[:12] ~ '…') if diag.aud else '—' }}</b></div>
+        <div><span>Vérification JWT</span> <b style="color:var(--text)">{{ 'activée' if diag.verify else 'désactivée' }}</b></div>
+        <div><span>Résultat vérif JWT</span>
+          <b style="color:{{ 'var(--green)' if diag.jwt_status.startswith('OK') else ('var(--danger)' if 'échec' in diag.jwt_status else 'var(--muted)') }}">{{ diag.jwt_status }}{% if diag.jwt_email %} → {{ diag.jwt_email }}{% endif %}</b>
         </div>
         {% if diag.jwt_error %}
-        <div style="color:var(--muted)">Détail : {{ diag.jwt_error }}</div>
+        <div style="color:var(--muted)"><span>Détail</span> <b style="color:var(--muted);font-weight:400">{{ diag.jwt_error }}</b></div>
         {% endif %}
       </div>
     </div>
   </section>
 
   <!-- --------------------------------------------------------- mise à jour -->
-  <section class="acct-section">
+  <section class="set-section">
     <h3>Mise à jour</h3>
     <div class="fl-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <span class="access-text" style="text-align:left;margin:0">Récupère la
@@ -129,8 +165,37 @@
     </div>
   </section>
 
+  <!-- ------------------------------------------------------- apparence hub -->
+  <section class="set-section">
+    <h3>Apparence du hub</h3>
+    <div class="fl-card" style="display:flex;flex-direction:column;gap:10px">
+      <label class="fl-label" for="bg-select">Fond d'écran</label>
+      <select id="bg-select" class="set-select">
+        <option value="dore">Nuit dorée (défaut)</option>
+        <option value="aurore">Aurore (dégradé)</option>
+        <option value="violet">Halo violet</option>
+        <option value="grille">Grille discrète</option>
+        <option value="sobre">Sobre (uni)</option>
+      </select>
+      <span class="access-note" id="bg-status" style="text-align:left;margin:0">Chargement…</span>
+    </div>
+  </section>
+
+  <!-- --------------------------------------------------- adresses locales -->
+  <section class="set-section">
+    <h3>Adresses locales (LAN)</h3>
+    <div class="fl-card">
+      <p class="access-note" style="text-align:left;margin:0 0 10px">
+        IP/URL locales renseignées sur chaque application (champ « Adresse locale »
+        dans l'éditeur du hub). Pratique pour accéder aux services depuis le réseau
+        sans passer par Cloudflare.
+      </p>
+      <div class="lan-list" id="lan-list"><span class="access-note" style="text-align:left;margin:0">Chargement…</span></div>
+    </div>
+  </section>
+
   <!-- ------------------------------------------------------------ comptes -->
-  <section class="acct-section">
+  <section class="set-section">
     <h3>Comptes</h3>
     <div class="fl-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <span class="access-text" style="text-align:left;margin:0">Gérer les demandes
@@ -139,4 +204,49 @@
     </div>
   </section>
 </div>
+
+{% raw %}
+<script>
+(function(){
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  let hub=null;
+  const sel=document.getElementById('bg-select');
+  const status=document.getElementById('bg-status');
+  const lanList=document.getElementById('lan-list');
+
+  fetch('/api/hub',{credentials:'same-origin'}).then(r=>r.json()).then(cfg=>{
+    hub=cfg; hub.settings=hub.settings||{};
+    // Apparence
+    const cur=hub.settings.bg||'dore';
+    sel.value=cur; document.body.setAttribute('data-bg',cur);
+    status.textContent='Appliqué au hub pour tout le monde.';
+    // Adresses locales
+    const rows=[];
+    (hub.categories||[]).forEach(c=>(c.sections||[]).forEach(s=>(s.items||[]).forEach(it=>{
+      if(it.type==='shortcut')return;
+      rows.push(it);
+    })));
+    if(!rows.length){lanList.innerHTML='<span class="access-note" style="text-align:left;margin:0">Aucune application.</span>';return;}
+    lanList.innerHTML=rows.map(it=>{
+      const ip=(it.lan||'').trim();
+      let ipHtml;
+      if(ip){const href=/^https?:\/\//i.test(ip)?ip:('http://'+ip);ipHtml=`<a class="lan-ip" href="${esc(href)}">${esc(ip)}</a>`;}
+      else ipHtml='<span class="lan-ip none">—</span>';
+      return `<div class="lan-row"><span class="lan-dot" style="background:${esc(it.color||'var(--accent)')}"></span><span class="lan-name">${esc(it.title)}</span>${ipHtml}</div>`;
+    }).join('');
+  }).catch(()=>{status.textContent='Impossible de charger la configuration.';lanList.innerHTML='<span class="access-note" style="text-align:left;margin:0">Erreur de chargement.</span>';});
+
+  sel.addEventListener('change',async()=>{
+    if(!hub)return;
+    const v=sel.value; document.body.setAttribute('data-bg',v);
+    hub.settings=hub.settings||{}; hub.settings.bg=v;
+    status.textContent='Enregistrement…';
+    try{
+      const r=await fetch('/api/hub',{method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(hub)});
+      status.textContent=r.ok?'Enregistré ✓ (visible au prochain chargement du hub)':'Échec de l\'enregistrement.';
+    }catch(e){status.textContent='Erreur réseau.';}
+  });
+})();
+</script>
+{% endraw %}
 {% endblock %}
