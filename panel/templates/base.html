@@ -6,8 +6,8 @@
   <meta name="theme-color" content="#0e0f11">
   <title>{% block title %}{{ brand.prefix }}{{ brand.suffix }}{% endblock %}</title>
   <link rel="icon" href="{{ url_for('static', filename='logo.svg') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='fonts.css') }}?v={{ asset_v }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v={{ asset_v }}">
   {% block head %}{% endblock %}
 </head>
 <body class="{% block body_class %}{% endblock %}">

@@ -15,6 +15,12 @@ def create_app(config_object: type = Config) -> Flask:
     app = Flask(__name__)
     app.config.from_object(config_object)
 
+    # Version des assets : change à chaque (re)démarrage du process (donc après
+    # chaque mise à jour + rechargement gunicorn) → casse le cache navigateur
+    # des fichiers statiques (style.css, bg.js…).
+    import time as _time
+    app.jinja_env.globals["asset_v"] = str(int(_time.time()))
+
     from . import db as db_module
     app.teardown_appcontext(db_module.close_db)
 

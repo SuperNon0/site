@@ -7,7 +7,7 @@
 {% block body_class %}has-bg{% endblock %}
 
 {% block head %}
-<script src="{{ url_for('static', filename='bg.js') }}"></script>
+<script src="{{ url_for('static', filename='bg.js') }}?v={{ asset_v }}"></script>
 <style>
   .set-wrap{max-width:640px;margin:0 auto;padding:22px 16px 70px}
   .set-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:26px}
@@ -159,9 +159,8 @@
     <div class="fl-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">
       <span class="access-text" style="text-align:left;margin:0">Récupère la
         dernière version depuis GitHub et redémarre le hub.</span>
-      <form method="post" action="{{ url_for('accounts.update_app') }}" style="margin:0"
-            onsubmit="return confirm('Mettre à jour le hub et redémarrer ?')">
-        <button type="submit" class="btn ghost small">↻ Mettre à jour</button>
+      <form id="update-form" method="post" action="{{ url_for('accounts.update_app') }}" style="margin:0">
+        <button id="update-btn" type="submit" class="btn ghost small">↻ Mettre à jour</button>
       </form>
     </div>
   </section>
@@ -223,7 +222,7 @@
   fetch('/api/hub',{credentials:'same-origin'}).then(r=>r.json()).then(cfg=>{
     hub=cfg; hub.settings=hub.settings||{};
     // Apparence
-    const cur=hub.settings.bg||'dore';
+    const cur=hub.settings.bg||'aurore';
     sel.value=cur; document.body.setAttribute('data-bg',cur);
     if(window.HubBG)HubBG.set(cur);
     status.textContent='Appliqué au hub pour tout le monde.';
@@ -242,6 +241,26 @@
       return `<div class="lan-row"><span class="lan-dot" style="background:${esc(it.color||'var(--accent)')}"></span><span class="lan-name">${esc(it.title)}</span>${ipHtml}</div>`;
     }).join('');
   }).catch(()=>{status.textContent='Impossible de charger la configuration.';lanList.innerHTML='<span class="access-note" style="text-align:left;margin:0">Erreur de chargement.</span>';});
+
+  // Mise à jour : lance, attend le redémarrage, puis recharge la page toute seule.
+  const uform=document.getElementById('update-form');
+  if(uform){
+    uform.addEventListener('submit',async(e)=>{
+      e.preventDefault();
+      if(!confirm('Mettre à jour le hub et redémarrer ?'))return;
+      const btn=document.getElementById('update-btn');
+      btn.disabled=true; btn.textContent='Mise à jour…';
+      try{ await fetch(uform.action,{method:'POST',credentials:'same-origin'}); }catch(err){}
+      btn.textContent='Redémarrage…';
+      let n=0;
+      const ping=async()=>{
+        n++;
+        try{ const r=await fetch(window.location.pathname,{cache:'no-store'}); if(r.ok){ location.reload(); return; } }catch(err){}
+        if(n<40) setTimeout(ping,1500); else location.reload();
+      };
+      setTimeout(ping,4000);
+    });
+  }
 
   sel.addEventListener('change',async()=>{
     if(!hub)return;

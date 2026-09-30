@@ -12,7 +12,7 @@
    page web normale → les apps s'ouvrent sans overlay. #}
 <link rel="apple-touch-icon" href="{{ url_for('static', filename='icon-192.png') }}">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
-<script src="{{ url_for('static', filename='bg.js') }}"></script>
+<script src="{{ url_for('static', filename='bg.js') }}?v={{ asset_v }}"></script>
 {% raw %}
 <style>
   /* ── Cockpit : rail de catégories + bandeau horloge/météo + tuiles teintées ── */
@@ -326,7 +326,7 @@ function initGrip(){
   const down=e=>{sx=e.touches?e.touches[0].clientX:e.clientX;sw=parseInt(getComputedStyle(appEl()).getPropertyValue('--rail-w'))||84;grip.classList.add('drag');document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);if(e.cancelable)e.preventDefault();};
   grip.addEventListener('mousedown',down);grip.addEventListener('touchstart',down,{passive:false});
 }
-function applyBg(){const b=(config.settings&&config.settings.bg)||'dore';document.body.setAttribute('data-bg',b);if(window.HubBG)HubBG.set(b);}
+function applyBg(){const b=(config.settings&&config.settings.bg)||'aurore';document.body.setAttribute('data-bg',b);if(window.HubBG)HubBG.set(b);}
 function renderContent(){
   const wrap=document.getElementById('content');
   const cat=findCat(currentCat)||config.categories[0];

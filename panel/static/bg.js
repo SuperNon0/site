@@ -54,9 +54,10 @@
       parts = []; for (var i = 0; i < n; i++) parts.push(mkPart());
     } else if (mode === "aurore") {
       blobs = [
-        { c: COLORS.gold, x: 0.22, y: 0.20, r: 0.6, sx: 0.6, sy: 0.4, ph: Math.random() * 6 },
-        { c: COLORS.mint, x: 0.80, y: 0.28, r: 0.52, sx: 0.5, sy: 0.65, ph: Math.random() * 6 },
-        { c: COLORS.violet, x: 0.52, y: 0.86, r: 0.62, sx: 0.7, sy: 0.5, ph: Math.random() * 6 }
+        { c: COLORS.gold, x: 0.20, y: 0.18, r: 0.7, sx: 0.6, sy: 0.4, ph: Math.random() * 6 },
+        { c: COLORS.mint, x: 0.82, y: 0.26, r: 0.62, sx: 0.5, sy: 0.65, ph: Math.random() * 6 },
+        { c: COLORS.violet, x: 0.50, y: 0.88, r: 0.72, sx: 0.7, sy: 0.5, ph: Math.random() * 6 },
+        { c: COLORS.gold, x: 0.70, y: 0.72, r: 0.55, sx: 0.45, sy: 0.55, ph: Math.random() * 6 }
       ];
     }
   }
@@ -95,9 +96,10 @@
       var b = blobs[i];
       var cx = (b.x + Math.sin(ts * b.sx + b.ph) * 0.12) * W;
       var cy = (b.y + Math.cos(ts * b.sy + b.ph) * 0.12) * H;
-      var rad = b.r * Math.max(W, H) * 0.6;
+      var rad = b.r * Math.max(W, H) * 0.62;
       var g = ctx.createRadialGradient(cx, cy, 0, cx, cy, rad);
-      g.addColorStop(0, "rgba(" + b.c + ",0.16)");
+      g.addColorStop(0, "rgba(" + b.c + ",0.24)");
+      g.addColorStop(0.5, "rgba(" + b.c + ",0.09)");
       g.addColorStop(1, "rgba(" + b.c + ",0)");
       ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 7); ctx.fill();
     }
