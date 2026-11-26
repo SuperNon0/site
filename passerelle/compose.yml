@@ -1,0 +1,96 @@
+# Passerelle : tout ce qui tourne dans le LXC « passerelle ».
+#
+#   Internet ─ Cloudflare ─ tunnel ─ cloudflared ─ Authentik (server:9000) ─┬─ hub (le domaine principal)
+#                                                                           └─ chaque site (IP:port de son LXC)
+#
+# Aucun port n'est ouvert vers l'extérieur : tout entre par le tunnel Cloudflare.
+# Le hub n'est joignable QUE par Authentik (il fait confiance aux en-têtes qu'Authentik ajoute).
+#
+# Démarrer / mettre à jour :  ./installer.sh   puis   ./mettre-a-jour.sh
+
+x-authentik: &authentik
+  image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2026.8.7}
+  restart: unless-stopped
+  depends_on:
+    postgresql:
+      condition: service_healthy
+  env_file: .env
+  environment: &authentik-env
+    TZ: ${TZ:-Europe/Paris}
+    AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?AUTHENTIK_SECRET_KEY manque dans .env}
+    AUTHENTIK_POSTGRESQL__HOST: postgresql
+    AUTHENTIK_POSTGRESQL__NAME: authentik
+    AUTHENTIK_POSTGRESQL__USER: authentik
+    AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS:?PG_PASS manque dans .env}
+    AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+    # Écoute en IPv4 (certains LXC n'ont pas d'IPv6).
+    AUTHENTIK_LISTEN__HTTP: 0.0.0.0:9000
+    AUTHENTIK_LISTEN__HTTPS: 0.0.0.0:9443
+    AUTHENTIK_LISTEN__METRICS: 0.0.0.0:9300
+    # E-mails (Brevo) : les mêmes réglages que le hub.
+    AUTHENTIK_EMAIL__HOST: ${SMTP_HOST:-}
+    AUTHENTIK_EMAIL__PORT: ${SMTP_PORT:-587}
+    AUTHENTIK_EMAIL__USERNAME: ${SMTP_USER:-}
+    AUTHENTIK_EMAIL__PASSWORD: ${SMTP_PASSWORD:-}
+    AUTHENTIK_EMAIL__USE_TLS: ${SMTP_TLS:-true}
+    AUTHENTIK_EMAIL__USE_SSL: ${SMTP_SSL:-false}
+    AUTHENTIK_EMAIL__FROM: ${SMTP_FROM:-}
+    AUTHENTIK_EMAIL__TIMEOUT: "15"
+  shm_size: 512mb
+
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authentik
+      POSTGRES_USER: authentik
+      POSTGRES_PASSWORD: ${PG_PASS:?PG_PASS manque dans .env}
+      TZ: ${TZ:-Europe/Paris}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -d authentik -U authentik"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  server:
+    <<: *authentik
+    command: server
+    volumes:
+      - ./data/authentik:/data
+      - ./authentik/templates:/templates
+
+  worker:
+    <<: *authentik
+    command: worker
+    volumes:
+      - ./data/authentik:/data
+      - ./authentik/templates:/templates
+
+  hub:
+    build: ./hub
+    image: passerelle-hub:local
+    restart: unless-stopped
+    depends_on:
+      - server
+    env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Paris}
+      AUTHENTIK_URL_INTERNE: http://server:9000
+      HUB_INTERNE: http://hub:8000
+      DATA_DIR: /data
+    volumes:
+      - ./data/hub:/data
+    # Pas de « ports: » ici, exprès : seul Authentik parle au hub.
+
+  cloudflared:
+    image: docker.io/cloudflare/cloudflared:${CLOUDFLARED_TAG:-2026.11.1}
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN manque dans .env}
+    depends_on:
+      - server
