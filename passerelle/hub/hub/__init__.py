@@ -67,6 +67,9 @@ def create_app(config: Config | None = None) -> Flask:
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         resp.headers.setdefault("Referrer-Policy", "same-origin")
         resp.headers.setdefault("X-Frame-Options", "DENY")
+        if request.path.startswith("/static/"):
+            # Polices et images lues aussi par la page de connexion d'Authentik (autre sous-domaine).
+            resp.headers["Access-Control-Allow-Origin"] = "*"
         if request.path.startswith("/api/") or request.path.startswith("/admin") or request.path == "/":
             resp.headers["Cache-Control"] = "no-store"
         return resp

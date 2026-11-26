@@ -155,12 +155,24 @@ def est_ip_privee(cible: str) -> bool:
 
 
 # ---------------------------------------------------------------- Authentik
+MAPPING_SECRET = "Passerelle : en-tête secret"
+
+
 def mappings_proxy(ak: Authentik) -> list[str]:
+    """openid, email, profile + notre « ak_proxy » (qui ajoute X-Passerelle-Cle).
+
+    Notre mapping remplace celui d'Authentik pour « ak_proxy » (il en reprend le contenu).
+    """
     pks = []
+    secret = ak.premier("/propertymappings/provider/scope/", name=MAPPING_SECRET)
     for managed in MANAGED_PROXY:
+        if secret and managed.endswith("/scope-proxy"):
+            continue
         m = ak.premier("/propertymappings/provider/scope/", managed=managed)
         if m:
             pks.append(m["pk"])
+    if secret:
+        pks.append(secret["pk"])
     return pks
 
 
@@ -187,6 +199,7 @@ class Synchro:
             "skip_path_regex": regex_chemins(s.chemins_publics),
             "access_token_validity": self.duree_session,
             "intercept_header_auth": True,
+            "property_mappings": mappings_proxy(self.ak),
         }
 
     def _app_donnees(self, s: Site, provider_pk: int) -> dict:
@@ -202,7 +215,7 @@ class Synchro:
         }
 
     def _regle_admins(self, app_pk: str, admins: bool) -> None:
-        liens = self.ak.liste("/policies/bindings/", target=app_pk)
+        liens = [b for b in self.ak.liste("/policies/bindings/", target=app_pk) if b["target"] == app_pk]
         groupe = self.ak.groupe(self.groupe_admins)
         if not groupe:
             raise AuthentikErreur(f"Groupe « {self.groupe_admins} » introuvable dans Authentik.")
@@ -222,7 +235,6 @@ class Synchro:
             donnees = self._provider_donnees(s) | {
                 "authorization_flow": self.ak.flux_pk("default-provider-authorization-implicit-consent"),
                 "invalidation_flow": self.ak.flux_pk("default-provider-invalidation-flow"),
-                "property_mappings": mappings_proxy(self.ak),
             }
             provider = self.ak.post("/providers/proxy/", donnees)
             app = self.ak.post("/core/applications/", self._app_donnees(s, provider["pk"]))

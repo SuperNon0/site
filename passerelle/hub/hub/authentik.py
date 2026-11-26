@@ -80,8 +80,26 @@ class Authentik:
             page += 1
 
     def premier(self, chemin, **params) -> dict | None:
-        res = self.get(chemin, page_size=1, **params).get("results", [])
-        return res[0] if res else None
+        """Le premier objet qui correspond VRAIMENT aux filtres simples (nom=…, slug=…).
+
+        Certains filtres sont ignorés par l'API selon les versions : on vérifie
+        donc nous-mêmes que les champs correspondent.
+        """
+        exacts = {k: v for k, v in params.items() if "__" not in k and k not in ("ordering", "search")
+                  and not isinstance(v, bool)}
+
+        def correspond(o: dict) -> bool:
+            return all(str(o.get(k, "")).lower() == str(v).lower() for k, v in exacts.items() if k in o)
+
+        res = self.get(chemin, page_size=20, **params).get("results", [])
+        for o in res:
+            if correspond(o):
+                return o
+        if exacts and len(res) == 20:
+            for o in self.liste(chemin, **params):
+                if correspond(o):
+                    return o
+        return None
 
     # ------------------------------------------------------------ santé
     def joignable(self) -> bool:

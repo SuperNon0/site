@@ -1,7 +1,7 @@
 """Qui visite le hub ? Authentik le dit, dans les en-têtes qu'il ajoute.
 
 Le hub n'est joignable que par Authentik (réseau interne de docker, aucun
-port ouvert). En plus, Authentik envoie un en-tête secret `X-Hub-Cle` :
+port ouvert). En plus, Authentik envoie un en-tête secret `X-Passerelle-Cle` :
 sans lui, le hub considère la requête comme anonyme, même si quelqu'un
 forge de faux en-têtes `X-authentik-*`.
 """
@@ -33,25 +33,34 @@ class Visiteur:
         return (self.prenom[:1] or "?").upper()
 
 
+def _entete(nom: str) -> str:
+    """Les en-têtes HTTP arrivent en latin-1 : on les relit en UTF-8 (« Noë », pas « NoÃ« »)."""
+    brut = request.headers.get(nom, "")
+    try:
+        return brut.encode("latin-1").decode("utf-8").strip()
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        return brut.strip()
+
+
 def lire_visiteur() -> Visiteur | None:
     cfg = current_app.config["HUB"]
     if cfg.DEV:
         return Visiteur(email=cfg.DEV_EMAIL, nom="Noë (dev)", username=cfg.DEV_EMAIL,
                         groupes=[cfg.GROUPE_ADMINS] if cfg.DEV_ADMIN else [cfg.GROUPE_MEMBRES],
                         admin=cfg.DEV_ADMIN)
-    cle = request.headers.get("X-Hub-Cle", "")
-    if not cfg.HUB_CLE_PROXY or not hmac.compare_digest(cle.encode(), cfg.HUB_CLE_PROXY.encode()):
+    cle = request.headers.get("X-Passerelle-Cle", "")
+    if not cfg.PASSERELLE_CLE or not hmac.compare_digest(cle.encode(), cfg.PASSERELLE_CLE.encode()):
         return None
-    email = request.headers.get("X-Authentik-Email", "").strip()
-    username = request.headers.get("X-Authentik-Username", "").strip()
+    email = _entete("X-Authentik-Email")
+    username = _entete("X-Authentik-Username")
     if not (email or username):
         return None
-    groupes = [x for x in request.headers.get("X-Authentik-Groups", "").split("|") if x]
+    groupes = [x for x in _entete("X-Authentik-Groups").split("|") if x]
     return Visiteur(
         email=email or username,
-        nom=request.headers.get("X-Authentik-Name", "").strip(),
+        nom=_entete("X-Authentik-Name"),
         username=username,
-        uid=request.headers.get("X-Authentik-Uid", "").strip(),
+        uid=_entete("X-Authentik-Uid"),
         groupes=groupes,
         admin=cfg.GROUPE_ADMINS in groupes,
     )

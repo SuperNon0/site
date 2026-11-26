@@ -1,0 +1,145 @@
+/* Page de connexion d'Authentik habillée en « Encre » (sombre, accent lavande).
+   Envoyée dans Authentik par configurer.py (Marque → CSS personnalisé).
+   {{HUB_URL}} est remplacé par l'adresse du hub au moment de la configuration.
+   Les couleurs reprennent les jetons du kit (encre.css, thème sombre). */
+
+@font-face { font-family: "Archivo"; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url({{HUB_URL}}/static/encre/polices/archivo-latin.woff2) format("woff2"); }
+@font-face { font-family: "DM Serif Display"; font-style: normal; font-weight: 400; font-display: swap;
+  src: url({{HUB_URL}}/static/encre/polices/dm-serif-display-latin.woff2) format("woff2"); }
+@font-face { font-family: "DM Mono"; font-style: normal; font-weight: 500; font-display: swap;
+  src: url({{HUB_URL}}/static/encre/polices/dm-mono-500-latin.woff2) format("woff2"); }
+
+:root, :host {
+  --e-bg: #0b0f17; --e-surface: #0f1520; --e-card: #141b28; --e-pop: #182131;
+  --e-line: #1e2737; --e-line2: #2b3549; --e-text: #e7ebf3; --e-soft: #aab3c5; --e-muted: #8a94aa;
+  --e-accent: #a99bff; --e-ink: #120d2e; --e-acc-dim: rgba(169, 155, 255, .14); --e-acc-line: rgba(169, 155, 255, .45);
+  --e-danger: #ef7d6b;
+
+  --pf-global--FontFamily--sans-serif: "Archivo", system-ui, sans-serif;
+  --pf-global--FontFamily--heading--sans-serif: "DM Serif Display", Georgia, serif;
+  --pf-global--BackgroundColor--100: var(--e-card);
+  --pf-global--BackgroundColor--200: var(--e-bg);
+  --pf-global--BackgroundColor--light-100: var(--e-card);
+  --pf-global--Color--100: var(--e-text);
+  --pf-global--Color--200: var(--e-soft);
+  --pf-global--Color--dark-100: var(--e-text);
+  --pf-global--Color--dark-200: var(--e-soft);
+  --pf-global--BorderColor--100: var(--e-line2);
+  --pf-global--BorderColor--200: var(--e-line2);
+  --pf-global--BorderColor--300: var(--e-line);
+  --pf-global--primary-color--100: var(--e-accent);
+  --pf-global--primary-color--200: var(--e-accent);
+  --pf-global--link--Color: var(--e-accent);
+  --pf-global--link--Color--hover: var(--e-text);
+  --pf-global--danger-color--100: var(--e-danger);
+  --pf-c-button--m-primary--BackgroundColor: var(--e-accent);
+  --pf-c-button--m-primary--hover--BackgroundColor: var(--e-accent);
+  --pf-c-button--m-primary--focus--BackgroundColor: var(--e-accent);
+  --pf-c-button--m-primary--active--BackgroundColor: var(--e-accent);
+  --pf-c-button--m-primary--Color: var(--e-ink);
+  --pf-c-button--m-primary--hover--Color: var(--e-ink);
+  --pf-c-button--m-primary--focus--Color: var(--e-ink);
+  --pf-c-button--m-primary--active--Color: var(--e-ink);
+  --pf-c-button--BorderRadius: 10px;
+  --pf-c-form-control--BackgroundColor: var(--e-surface);
+  --pf-c-form-control--Color: var(--e-text);
+  --pf-c-form-control--BorderTopColor: var(--e-line2);
+  --pf-c-form-control--BorderRightColor: var(--e-line2);
+  --pf-c-form-control--BorderBottomColor: var(--e-line2);
+  --pf-c-form-control--BorderLeftColor: var(--e-line2);
+  --pf-c-form-control--hover--BorderBottomColor: var(--e-acc-line);
+  --pf-c-form-control--focus--BorderBottomColor: var(--e-accent);
+  --pf-c-form-control--focus--BorderBottomWidth: 1px;
+  --pf-c-form-control--FontSize: 16px;
+  --pf-c-form__label--Color: var(--e-soft);
+  --pf-c-login__main--BackgroundColor: var(--e-card);
+  --pf-c-title--m-3xl--FontSize: 28px;
+}
+
+/* Le fond : celui du kit (halos + étoiles), image servie par le hub. */
+html, body, .pf-c-login, [part="login"] { background: var(--e-bg) url({{HUB_URL}}/static/fond-connexion.jpg) center / cover no-repeat fixed !important; color: var(--e-text); }
+body, input, button, select, textarea { font-family: "Archivo", system-ui, sans-serif; }
+
+/* La carte */
+.pf-c-login__main, [part="main"] {
+  background: var(--e-card) !important;
+  border: 1px solid var(--e-line) !important;
+  border-radius: 22px !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .45) !important;
+  color: var(--e-text) !important;
+  overflow: hidden;
+}
+@media (max-width: 575px) {
+  .pf-c-login__main, [part="main"] { margin: 0 12px !important; border-radius: 22px !important; }
+  .pf-c-login__container { padding: 0 !important; }
+}
+.pf-c-login__main-header.pf-c-brand { padding-top: 28px !important; }
+.branding-logo { max-height: 46px !important; width: auto !important; }
+
+.pf-c-title, h1.pf-c-title {
+  font-family: "DM Serif Display", Georgia, serif !important;
+  font-weight: 400 !important; letter-spacing: 0 !important; color: var(--e-text) !important;
+}
+.pf-c-login__main-body, .pf-c-login__main-header, p, .pf-c-form__helper-text { color: var(--e-soft); }
+.pf-c-form__label, .pf-c-form__label-text { color: var(--e-soft) !important; font-weight: 500 !important; font-size: 13px !important; }
+.pf-c-form__label-required { color: var(--e-accent) !important; }
+
+/* Les champs */
+.pf-c-form-control {
+  min-height: 48px !important; border-radius: 12px !important;
+  background: var(--e-surface) !important; color: var(--e-text) !important;
+  border: 1px solid var(--e-line2) !important; font-size: 16px !important;
+}
+.pf-c-form-control:focus { border-color: var(--e-acc-line) !important; box-shadow: 0 0 0 3px var(--e-acc-dim) !important; outline: 0 !important; }
+.pf-c-form-control::placeholder { color: var(--e-muted) !important; font-style: normal !important; }
+.pf-c-form-control[readonly] { color: var(--e-soft) !important; background: var(--e-bg) !important; }
+.pf-c-input-group { border-radius: 12px; }
+.pf-c-input-group .pf-c-button { border-radius: 0 12px 12px 0 !important; color: var(--e-muted) !important; }
+
+/* Les boutons */
+.pf-c-button.pf-m-primary {
+  min-height: 48px; border-radius: 10px !important; font-weight: 700 !important;
+  background: var(--e-accent) !important; color: var(--e-ink) !important; border: 0 !important;
+}
+.pf-c-button.pf-m-primary:hover { filter: brightness(1.06); }
+.pf-c-button.pf-m-primary::after { border: 0 !important; }
+.pf-c-button.pf-m-secondary, .pf-c-button.pf-m-tertiary {
+  min-height: 44px; border-radius: 10px !important; color: var(--e-text) !important;
+  background: var(--e-pop) !important; border: 1px solid var(--e-line2) !important;
+}
+.pf-c-button.pf-m-secondary::after, .pf-c-button.pf-m-tertiary::after { border: 0 !important; }
+
+/* Le bouton Google et les autres sources */
+.pf-c-login__main-footer-links-item .pf-c-button, .pf-c-login__main-footer-links-item a,
+.ak-c-source-button, [part="source-button"] {
+  border-radius: 10px !important; background: var(--e-pop) !important; color: var(--e-text) !important;
+  border: 1px solid var(--e-line2) !important; min-height: 44px;
+}
+
+/* Liens */
+a, .pf-c-button.pf-m-link { color: var(--e-accent) !important; }
+a:hover { color: var(--e-text) !important; }
+.pf-c-login__main-footer-band { background: transparent !important; border-top: 1px solid var(--e-line) !important; color: var(--e-soft) !important; }
+
+/* Messages d'erreur et alertes */
+.pf-c-form__helper-text.pf-m-error, .pf-m-error { color: var(--e-danger) !important; }
+.pf-c-alert { border-radius: 12px !important; background: var(--e-pop) !important; color: var(--e-text) !important; }
+
+/* Le pied : « Demander un accès » bien visible, « Powered by » discret */
+.pf-c-login__footer, [part="footer"] { color: var(--e-soft) !important; }
+.pf-c-login__footer .pf-c-list a, [part="list-item-link"] {
+  color: var(--e-text) !important; font-weight: 600;
+  display: inline-flex; align-items: center; min-height: 40px; padding: 0 16px;
+  border-radius: 99px; border: 1px solid var(--e-acc-line); background: var(--e-acc-dim);
+  text-decoration: none !important; white-space: nowrap;
+}
+.pf-c-login__footer .pf-c-list, [part="list"] { justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; flex-direction: column; }
+.pf-c-login__footer, [part="footer"] { justify-content: center; text-align: center; }
+.pf-c-login__footer .pf-c-list li:last-child, [part="list-item"]:last-child { opacity: .55; font-size: 12px; }
+
+/* Sélecteur de langue discret */
+ak-locale-select, [part="locale-select"] { opacity: .7; }
+
+/* Écrans de l'interface utilisateur (Mon compte) : même fond */
+.pf-c-page { --pf-c-page--BackgroundColor: var(--e-bg); }

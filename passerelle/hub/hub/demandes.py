@@ -1,6 +1,6 @@
 """Demandes d'accès : formulaire public → BotPanel → Accepter / Refuser.
 
-Accepter = créer une invitation Authentik (à usage unique, 7 jours) et envoyer
+Accepter = créer une invitation Authentik (valable 7 jours, effacée une fois le compte créé) et envoyer
 par e-mail le lien où la personne choisit son mot de passe. Son compte est
 créé à ce moment-là, dans le groupe « Membres ».
 Refuser = la demande reste en base, marquée refusée : si la personne revient,
@@ -135,7 +135,9 @@ def _creer_invitation(demande) -> tuple[str, str]:
     inv = client.post("/stages/invitation/invitations/", {
         "name": f"hub-{demande['id']}-{secrets.token_hex(3)}",
         "expires": expire.isoformat(),
-        "single_use": True,
+        # Pas « à usage unique » : Authentik l'efface dès qu'on ouvre le lien, et un onglet
+        # fermé trop tôt le rendrait inutilisable. Le hub l'efface lui-même une fois le compte créé.
+        "single_use": False,
         "flow": flux,
         "fixed_data": {"username": demande["email"], "email": demande["email"], "name": nom_complet},
     })
@@ -246,8 +248,9 @@ def rafraichir_inscrites() -> None:
         return
     try:
         client = ak()
-        for d in acceptees:
+        for d in db.execute("SELECT id, email, invitation FROM demandes WHERE statut='acceptee'").fetchall():
             if client.premier("/core/users/", email=d["email"]):
+                _supprimer_invitation(d["invitation"])
                 db.execute("UPDATE demandes SET statut='inscrite', invitation=NULL WHERE id=?", (d["id"],))
         db.commit()
     except AuthentikErreur:

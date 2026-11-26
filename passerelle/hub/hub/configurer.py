@@ -32,6 +32,7 @@ from pathlib import Path
 
 from .authentik import Authentik, AuthentikErreur
 from .config import Config
+from .sites import MAPPING_SECRET, SKIP_HUB, mappings_proxy
 
 # Droits du compte de service « hub » : rien d'autre.
 PERMISSIONS_HUB = [
@@ -69,7 +70,6 @@ SLUG_INVITATION = "hub-invitation"
 SLUG_RECUPERATION = "hub-recuperation"
 SLUG_GOOGLE_INCONNU = "hub-google-sans-compte"
 
-MAPPING_SECRET = "Hub : en-tête secret"
 
 
 def etape(texte: str) -> None:
@@ -95,7 +95,7 @@ class Configurateur:
 
     def lier(self, flux_pk: str, etape_pk: str, ordre: int, **extra) -> None:
         """Place une étape dans un flux (une seule fois)."""
-        liens = self.ak.liste("/flows/bindings/", target=flux_pk)
+        liens = [b for b in self.ak.liste("/flows/bindings/", target=flux_pk) if b["target"] == flux_pk]
         for lien in liens:
             if lien["stage"] == etape_pk:
                 if lien["order"] != ordre:
@@ -144,9 +144,9 @@ class Configurateur:
             "name": "hub-mot-de-passe-solide", "password_field": "password",
             "length_min": 8, "amount_digits": 0, "amount_uppercase": 0,
             "amount_lowercase": 0, "amount_symbols": 0,
-            "check_static_rules": True, "check_have_i_been_pwned": True,
+            "check_static_rules": True, "check_have_i_been_pwned": False,
             "hibp_allowed_count": 0, "check_zxcvbn": False,
-            "error_message": "Choisis un mot de passe d'au moins 8 caractères, pas trop connu.",
+            "error_message": "Choisis un mot de passe d'au moins 8 caractères.",
         }
         if pol:
             return self.ak.patch(f"/policies/password/{pol['pk']}/", donnees)["pk"]
@@ -161,7 +161,8 @@ class Configurateur:
         email = self.prompt(
             "hub-invitation-email", field_key="hub_email_affiche", label="Ton adresse e-mail",
             type="text_read_only", required=False, order=10,
-            placeholder='return prompt_context.get("email", "")', placeholder_expression=True,
+            initial_value='return prompt_context.get("email", "")', initial_value_expression=True,
+            placeholder="", placeholder_expression=False,
         )
         champs = [email, *self.champs_mot_de_passe()]
         p = self.assurer("/stages/prompt/stages/", {"name": "hub-invitation-mot-de-passe"},
@@ -173,7 +174,11 @@ class Configurateur:
                           "user_type": "internal", "user_path_template": "users"})
         lg = self.assurer("/stages/user_login/", {"name": "hub-connexion"},
                           {"name": "hub-connexion", "session_duration": self.cfg.DUREE_SESSION})
-        for ordre, st in ((10, inv), (20, p), (30, w), (40, lg)):
+        vers_hub = self.assurer("/stages/redirect/", {"name": "hub-vers-accueil"},
+                                {"name": "hub-vers-accueil", "mode": "static", "keep_context": False,
+                                 "target_static": f"{self.cfg.HUB_URL}/"})
+        self.vers_hub = vers_hub
+        for ordre, st in ((10, inv), (20, p), (30, w), (40, lg), (50, vers_hub)):
             self.lier(f["pk"], st["pk"], ordre)
         self.flux_invitation_pk = f["pk"]
         ok(f"flux « {SLUG_INVITATION} »")
@@ -197,7 +202,7 @@ class Configurateur:
         w = self.assurer("/stages/user_write/", {"name": "hub-recuperation-ecriture"},
                          {"name": "hub-recuperation-ecriture", "user_creation_mode": "never_create"})
         lg = self.ak.premier("/stages/user_login/", name="hub-connexion")
-        for ordre, st in ((10, ident), (20, mail), (30, p), (40, w), (50, lg)):
+        for ordre, st in ((10, ident), (20, mail), (30, p), (40, w), (50, lg), (60, self.vers_hub)):
             self.lier(f["pk"], st["pk"], ordre)
         self.flux_recuperation_pk = f["pk"]
         ok(f"flux « {SLUG_RECUPERATION} »")
@@ -244,13 +249,13 @@ class Configurateur:
         login = self.ak.premier("/stages/user_login/", name="default-authentication-login")
         self.ak.patch(f"/stages/user_login/{login['pk']}/", {"session_duration": self.cfg.DUREE_SESSION})
         self.ak.patch("/flows/instances/default-authentication-flow/",
-                      {"title": f"Connexion à {self.cfg.NOM_SITE}"})
+                      {"title": "Connexion"})
         ok("e-mail + mot de passe sur la même page, Google, « Mot de passe oublié ? »")
 
         css = ""
         chemin_css = Path(__file__).with_name("authentik.css")
         if chemin_css.exists():
-            css = chemin_css.read_text(encoding="utf-8")
+            css = chemin_css.read_text(encoding="utf-8").replace("{{HUB_URL}}", self.cfg.HUB_URL)
         brand = self.ak.premier("/core/brands/", default=True) or self.ak.liste("/core/brands/")[0]
         self.ak.patch(f"/core/brands/{brand['brand_uuid']}/", {
             "branding_title": self.cfg.NOM_SITE,
@@ -292,26 +297,36 @@ class Configurateur:
         ok(f"{len(PERMISSIONS_HUB)} droits, jeton écrit dans {fichier}")
         return cle
 
-    def application_hub(self) -> None:
-        etape(f"Application « Hub » sur https://{self.cfg.DOMAINE}")
-        # Le hub reçoit un en-tête secret : il refuse toute requête qui ne vient pas d'Authentik.
+    def entete_secret(self) -> None:
+        etape("En-tête secret ajouté par Authentik (X-Passerelle-Cle)")
+        # Authentik ajoute cet en-tête à chaque requête connectée, vers le hub et vers chaque site.
+        # Sur les chemins publics (/api/notify…), il n'est pas là : un faux X-authentik-email ne vaut rien.
         expr = (
             "attrs = dict(request.user.group_attributes(request))\n"
             "entetes = dict(attrs.get(\"additionalHeaders\") or {})\n"
-            f"entetes[\"X-Hub-Cle\"] = \"{self.cfg.HUB_CLE_PROXY}\"\n"
+            f"entetes[\"X-Passerelle-Cle\"] = \"{self.cfg.PASSERELLE_CLE}\"\n"
             "attrs[\"additionalHeaders\"] = entetes\n"
             "return {\"ak_proxy\": {\"user_attributes\": attrs, "
             "\"is_superuser\": request.user.is_superuser}}\n"
         )
-        mapping = self.assurer("/propertymappings/provider/scope/", {"name": MAPPING_SECRET},
+        self.assurer("/propertymappings/provider/scope/", {"name": MAPPING_SECRET},
                                {"name": MAPPING_SECRET, "scope_name": "ak_proxy",
-                                "description": "Prouve au hub que la requête vient d'Authentik",
+                                "description": "Prouve au hub et aux sites que la personne est connectée par Authentik",
                                 "expression": expr})
-        from .sites import SKIP_HUB, mappings_proxy  # import tardif (évite une boucle)
+        # Les sites déjà ajoutés par le hub reçoivent aussi l'en-tête.
         mappings = mappings_proxy(self.ak)
-        mappings = [m for m in mappings if m != self.ak.premier(
-            "/propertymappings/provider/scope/", managed="goauthentik.io/providers/proxy/scope-proxy")["pk"]]
-        mappings.append(mapping["pk"])
+        n = 0
+        for prov in self.ak.liste("/providers/proxy/"):
+            if prov["name"].startswith("Site : ") and sorted(prov.get("property_mappings", [])) != sorted(mappings):
+                self.ak.patch(f"/providers/proxy/{prov['pk']}/", {"property_mappings": mappings, "mode": prov["mode"],
+                                                              "internal_host": prov["internal_host"]})
+                n += 1
+        ok("le hub et les sites peuvent vérifier que la personne est vraiment connectée"
+           + (f" ({n} site(s) mis à jour)" if n else ""))
+
+    def application_hub(self) -> None:
+        etape(f"Application « Hub » sur https://{self.cfg.DOMAINE}")
+        mappings = mappings_proxy(self.ak)
         prov = self.assurer("/providers/proxy/", {"name": "Hub"}, {
             "name": "Hub", "mode": "proxy",
             "authorization_flow": self.ak.flux_pk("default-provider-authorization-implicit-consent"),
@@ -366,6 +381,7 @@ class Configurateur:
         sources = self.google()
         self.page_connexion(sources)
         self.compte_service()
+        self.entete_secret()
         self.application_hub()
         mdp = self.compte_admin()
         print("\n✅ Authentik est prêt pour le hub.")

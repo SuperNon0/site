@@ -34,8 +34,8 @@ class Config:
         self.DUREE_SESSION = _s("DUREE_SESSION", "days=30")
         self.INVITATION_JOURS = int(_s("INVITATION_JOURS", "7") or 7)
 
-        # Secret que seul Authentik envoie au hub (en-tête X-Hub-Cle).
-        self.HUB_CLE_PROXY = _s("HUB_CLE_PROXY")
+        # Secret que seul Authentik envoie au hub et aux sites (en-tête X-Passerelle-Cle).
+        self.PASSERELLE_CLE = _s("PASSERELLE_CLE")
 
         self.ADMIN_EMAIL = _s("ADMIN_EMAIL")
         self.ADMIN_NOM = _s("ADMIN_NOM")
@@ -61,7 +61,7 @@ class Config:
         self.DEV_EMAIL = _s("HUB_DEV_EMAIL", "noe@exemple.fr")
         self.DEV_ADMIN = _b("HUB_DEV_ADMIN", True)
 
-        self.SECRET = _s("HUB_SECRET") or self.HUB_CLE_PROXY or "dev-seulement"
+        self.SECRET = _s("HUB_SECRET") or self.PASSERELLE_CLE or "dev-seulement"
 
     # Jeton du compte de service : variable d'environnement, sinon fichier écrit par configurer.py
     @property
