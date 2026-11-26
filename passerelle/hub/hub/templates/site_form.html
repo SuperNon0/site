@@ -59,8 +59,8 @@
     <div class="reg-l"><div class="tx"><b>Réservé aux administrateurs</b><span>Sinon, tous les membres acceptés peuvent l'ouvrir.</span></div><input type="checkbox" class="sw" name="acces_admins" {{ 'checked' if site.acces == 'admins' }} aria-label="Réservé aux administrateurs"></div>
     <div class="hub-champ" data-champ="chemins_publics">
       <label class="lbl" for="f-chemins_publics">Chemins ouverts sans connexion <button type="button" class="q" aria-label="Explication" data-t="Chemins ouverts sans connexion" data-d="Pour les appels de machines (Home Assistant, Claude, Proxmox…) qui ne peuvent pas se connecter. Exemple : /api/notify ouvre /api/notify et tout ce qui est dessous. Laisse vide si le site n'en a pas besoin.">?</button></label>
-      <textarea class="input mono" id="f-chemins_publics" name="chemins_publics" rows="4" placeholder="/api/notify&#10;/mcp&#10;/.well-known&#10;/oauth" spellcheck="false">{{ site.chemins_publics }}</textarea>
-      <p class="hub-aide">Un chemin par ligne. Par défaut : /api/notify, /mcp, et /.well-known + /oauth pour que Claude puisse se connecter au MCP.</p>
+      <textarea class="input mono" id="f-chemins_publics" name="chemins_publics" rows="6" placeholder="/api/notify&#10;/api/mcp$" spellcheck="false">{{ site.chemins_publics }}</textarea>
+      <p class="hub-aide">Un chemin par ligne : il ouvre aussi tout ce qui est dessous, sauf s'il finit par « $ ». Par défaut : /api/notify et le MCP avec sa connexion Claude (/api/mcp, son inscription, son jeton et ses deux fiches /.well-known).</p>
       <p class="hub-err" hidden></p>
     </div>
   </section>

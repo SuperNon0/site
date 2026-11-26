@@ -54,10 +54,10 @@
         <p>Une machine ne peut pas utiliser une adresse protégée : Authentik lui répondrait par la page de connexion.</p>
       </div></details>
       <details open><summary>{{ ic("plug") }}Claude, par un connecteur MCP{{ ic("chev", "s18 chev") }}</summary><div class="rep">
-        <p>Claude se connecte avec ton compte, comme toi dans un navigateur. Dans Claude : Paramètres → Connecteurs → Ajouter, colle <code>https://{{ ex }}/mcp</code>, puis <b>Se connecter</b>. La page de connexion de la passerelle s'ouvre, et c'est tout : ni en-tête, ni jeton à copier.</p>
-        <p>Claude Code : <code>claude mcp add --transport http nom https://{{ ex }}/mcp</code>, puis <code>/mcp</code> → Se connecter.</p>
-        <p>Côté site : les chemins publics <code>/mcp</code>, <code>/.well-known</code> et <code>/oauth</code> (déjà là par défaut), puis <code>brancher_mcp(app)</code> et <code>@mcp_requis</code> du kit. Le site sait qui utilise le MCP.</p>
-        <div class="reg-l"><div class="tx"><b>Client OAuth dans Authentik</b><span>claude-mcp · {{ cfg.AUTH_URL }}/application/o/mcp/</span></div></div>
+        <p>Dans Claude : Paramètres → Connecteurs → Ajouter, colle <code>https://{{ ex }}/api/mcp</code>, laisse <b>Client ID et secret vides</b>, puis <b>Se connecter</b>. Tu passes par la connexion de la passerelle, puis le site demande « Autoriser Claude ? ». Ni en-tête, ni jeton à copier.</p>
+        <p>Claude Code : <code>claude mcp add --transport http nom https://{{ ex }}/api/mcp</code>, puis <code>/mcp</code> → Authenticate.</p>
+        <p>Côté site : le site est son propre guichet OAuth, rien à créer dans Authentik. <code>brancher_mcp(app)</code> et <code>@mcp_requis</code> sur <code>/api/mcp</code> (ou <code>guichetMcp</code> et <code>accesMcp</code> en TypeScript). Les chemins publics du guichet sont déjà là par défaut ; <code>/api/mcp/oauth/autoriser</code> reste derrière la connexion. Un bouton « Déconnecter Claude » coupe tous les connecteurs du site.</p>
+        <p>Tout le détail, à donner à Claude quand il développe : <code>passerelle/docs/mcp-oauth.md</code>.</p>
       </div></details>
     </div>
   </div>

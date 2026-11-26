@@ -13,15 +13,23 @@ Ce site est publié derrière la passerelle de Noë (Authentik). Règles à resp
 - Pages : `@connexion_requise` ou `@admin_requis`. API appelées aussi par des
   machines : `@personne_ou_machine`. Appels de machines seulement : `@machine_requise`.
 - Tout ce qui est appelé par une machine (autre site sur l'IP locale, Home
-  Assistant, webhook, `/mcp`) arrive **sans** Authentik : vérifier un jeton
+  Assistant, webhook) arrive **sans** Authentik : vérifier un jeton
   (`SERVICE_JETONS`, `Authorization: Bearer`) ou une signature HMAC
   (`signature_valide`). Jamais de chemin public qui modifie des données sans vérification.
-- MCP : connexion OAuth native avec le compte Authentik (client `claude-mcp`
-  créé par la passerelle). En Flask : `brancher_mcp(app)` puis `@mcp_requis` sur
-  `/mcp` ; en TypeScript : `mcpRessource`, `mcpServeur`, `mcpEnregistrer`,
-  `mcpVerifier`, `mcpEnteteRefus`. Ne pas inventer d'autre système (pas de clé
-  dans l'URL, pas d'OAuth maison). Chemins publics : `/mcp`, `/.well-known`, `/oauth`.
-  `.env` : `PASSERELLE_URL_SITE=https://<site>.super-nono.cc`.
+- **MCP (connecteur Claude)** : le site est son propre guichet OAuth (modèle
+  RecipeLog), voir `passerelle/docs/mcp-oauth.md`. Rien à créer dans Authentik.
+  - Flask : `brancher_mcp(app, nom="…")` puis `@mcp_requis` sur `/api/mcp`.
+    TypeScript : `guichetMcp(req, "…")` en tête du routeur, `accesMcp(req)` dans `/api/mcp`.
+    Ne pas réécrire l'OAuth, ne pas inventer de clé dans l'URL ni d'en-tête.
+  - Serveur MCP sur `/api/mcp` uniquement. Chemins publics dans le hub :
+    `/api/mcp$`, `/api/mcp/oauth/inscription`, `/api/mcp/oauth/jeton`,
+    `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`.
+    `/api/mcp/oauth/autoriser` et `/deconnecter` restent derrière Authentik.
+  - `.env` : `PASSERELLE_URL_SITE=https://<site>.super-nono.cc`,
+    `PASSERELLE_MCP_SECRET` (32+ caractères, propre au site), `PASSERELLE_MCP_POUR`
+    (`admins` par défaut, `tous` ou un groupe), `PASSERELLE_MCP_FICHIER` (dossier sauvegardé).
+  - Bouton « Déconnecter Claude » dans l'admin : `POST /api/mcp/oauth/deconnecter`.
+  - Dans Claude : adresse `https://<site>.super-nono.cc/api/mcp`, Client ID et secret vides.
 - Lien « Se déconnecter » : `/outpost.goauthentik.io/sign_out`.
   Lien « Mon compte » : `https://auth.super-nono.cc/if/user/`.
 - Tout nouveau chemin public doit être ajouté dans le hub (Sites → le site →
@@ -30,4 +38,4 @@ Ce site est publié derrière la passerelle de Noë (Authentik). Règles à resp
 - Dev local : `PASSERELLE_CLE` vide + `PASSERELLE_DEV_EMAIL=...` (+ `PASSERELLE_DEV_ADMIN=1`).
 - Variables `.env` : `PASSERELLE_CLE`, `SERVICE_JETONS` (format `nom:jeton,nom2:jeton2`, jetons d'au moins 24 caractères).
 
-Guide complet : `passerelle/docs/brancher-un-projet.md` du dépôt SuperNon0/site.
+Guides complets : `passerelle/docs/brancher-un-projet.md` et `passerelle/docs/mcp-oauth.md` du dépôt SuperNon0/site.

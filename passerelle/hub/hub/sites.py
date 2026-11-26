@@ -24,8 +24,10 @@ SKIP_HUB = "\n".join([
     r"^/sante$",
 ])
 
-# /.well-known et /oauth : la connexion OAuth des clients MCP (voir static/kit/passerelle_auth.py).
-CHEMINS_PUBLICS_DEFAUT = "/api/notify\n/mcp\n/.well-known\n/oauth"
+# Le MCP et son guichet OAuth (docs/mcp-oauth.md). « $ » à la fin = ce chemin exactement, sans ce qui est dessous :
+# /api/mcp/oauth/autoriser reste derrière Authentik, c'est là que la personne se connecte.
+CHEMINS_PUBLICS_DEFAUT = ("/api/notify\n/api/mcp$\n/api/mcp/oauth/inscription\n/api/mcp/oauth/jeton\n"
+                          "/.well-known/oauth-protected-resource\n/.well-known/oauth-authorization-server")
 
 SOUS_DOMAINES_RESERVES = {"auth", "www", "hub"}
 
@@ -124,8 +126,8 @@ def lire_formulaire(form, domaine: str) -> Site:
             ligne = ligne.strip()
             if not ligne:
                 continue
-            if not ligne.startswith("/") or " " in ligne:
-                s.erreurs["chemins_publics"] = "Un chemin par ligne, qui commence par « / » (ex. : /api/notify)."
+            if not ligne.startswith("/") or " " in ligne or "$" in ligne[:-1]:
+                s.erreurs["chemins_publics"] = "Un chemin par ligne, qui commence par « / » (ex. : /api/notify, ou /api/mcp$ pour ce chemin seul)."
                 break
             chemins.append(ligne)
         s.chemins_publics = "\n".join(chemins)
@@ -138,12 +140,17 @@ def lire_formulaire(form, domaine: str) -> Site:
 
 
 def regex_chemins(chemins_publics: str) -> str:
-    """« /api/notify » → « ^/api/notify(/.*)?$ » (le chemin et tout ce qui est dessous)."""
+    """« /api/notify » → « ^/api/notify(/.*)?$ » (le chemin et tout ce qui est dessous).
+
+    « /api/mcp$ » → « ^/api/mcp$ » (ce chemin seulement).
+    """
     lignes = []
     for ch in (chemins_publics or "").splitlines():
-        ch = ch.strip().rstrip("/")
+        ch = ch.strip()
+        exact = ch.endswith("$")
+        ch = ch.rstrip("$").rstrip("/")
         if ch:
-            lignes.append("^" + re.escape(ch) + "(/.*)?$")
+            lignes.append("^" + re.escape(ch) + ("$" if exact else "(/.*)?$"))
     return "\n".join(lignes)
 
 

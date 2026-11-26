@@ -326,7 +326,7 @@ docker compose up -d</pre><button class="copier" type="button">Copier</button></
       <tr><td>Sous-domaine</td><td><code>recettes</code> pour <code>recettes.super-nono.cc</code></td></tr>
       <tr><td>Adresse</td><td>l'IP et le port du LXC, par exemple <code>192.168.1.60:3000</code> (bouton <span class="chemin">Tester</span> pour vérifier)</td></tr>
       <tr><td>Accès</td><td>« Membres » ou « Admins seulement »</td></tr>
-      <tr><td>Chemins publics</td><td><code>/api/notify</code>, <code>/mcp</code>, <code>/.well-known</code> et <code>/oauth</code> par défaut : joignables sans passer par la page de connexion (les deux derniers servent à Claude pour se connecter au MCP avec ton compte)</td></tr>
+      <tr><td>Chemins publics</td><td><code>/api/notify</code> et les adresses du guichet MCP (<code>/api/mcp$</code>, <code>/api/mcp/oauth/inscription</code>, <code>/api/mcp/oauth/jeton</code>, les deux <code>/.well-known/oauth-…</code>) par défaut : joignables sans passer par la page de connexion. Un <code>$</code> final veut dire « ce chemin exactement ». La page « Autoriser Claude ? » reste derrière la connexion.</td></tr>
     </table></div>
     <p>Le hub crée tout seul la protection dans Authentik. Un site peut aussi être un simple lien externe.</p></div></div>
 

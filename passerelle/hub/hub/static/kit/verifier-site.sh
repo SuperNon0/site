@@ -5,8 +5,9 @@
 #
 # Options :
 #   --domaine super-nono.cc        (sinon lu dans le .env de la passerelle, sinon super-nono.cc)
-#   --chemins "/api/notify /mcp"   chemins publics à tester (défaut : /api/notify, /mcp et la découverte OAuth)
+#   --chemins "/api/notify /api/hook"  autres chemins publics à tester (défaut : /api/notify)
 #   --page-privee /api/moi         une adresse de TON app qui doit refuser un inconnu (401/403/302)
+#   --sans-mcp                     le site n'a pas de MCP (sinon le guichet OAuth est vérifié)
 #
 # À lancer depuis le LXC de la passerelle (les appels directs à l'IP y sont autorisés).
 # Exemple :  ./verifier-site.sh recettes 192.168.1.60:3000 --page-privee /api/moi
@@ -14,12 +15,13 @@ set -uo pipefail
 
 [ $# -ge 2 ] || { sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 SD="$1"; CIBLE="$2"; shift 2
-DOMAINE=""; CHEMINS="/api/notify /mcp /.well-known/oauth-protected-resource"; PRIVEE=""
+DOMAINE=""; CHEMINS="/api/notify"; PRIVEE=""; MCP=1
 while [ $# -gt 0 ]; do
   case "$1" in
     --domaine) DOMAINE="$2"; shift 2 ;;
     --chemins) CHEMINS="$2"; shift 2 ;;
     --page-privee) PRIVEE="$2"; shift 2 ;;
+    --sans-mcp) MCP=0; shift ;;
     *) echo "Option inconnue : $1"; exit 2 ;;
   esac
 done
@@ -59,6 +61,32 @@ for chemin in $CHEMINS; do
   fi
 done
 
+if [ "$MCP" = 1 ]; then
+  echo; echo "1 bis. MCP : le guichet OAuth du site (docs/mcp-oauth.md)"
+  www="$(curl -s -o /dev/null -D - --max-time 10 -X POST "$URL/api/mcp" 2>/dev/null | tr -d '\r' | grep -i '^www-authenticate:' || true)"
+  read -r code redir <<<"$(code_de -X POST "$URL/api/mcp")"
+  if [ "$code" = "401" ] && [[ "$www" == *resource_metadata=* ]]; then
+    bon "POST /api/mcp sans jeton → 401 avec WWW-Authenticate (Claude saura où se connecter)"
+  elif [[ "$redir" == *"auth.$DOMAINE"* || "$redir" == *"/outpost.goauthentik.io/"* ]]; then
+    mauvais "/api/mcp renvoie vers la connexion : ajoute « /api/mcp\$ » aux chemins publics du site dans le hub"
+  else
+    mauvais "POST /api/mcp sans jeton → $code (attendu : 401 + WWW-Authenticate resource_metadata=…)"
+  fi
+  for fiche in /.well-known/oauth-protected-resource/api/mcp /.well-known/oauth-authorization-server; do
+    corps="$(curl -s --max-time 10 "$URL$fiche" 2>/dev/null || true)"
+    if [[ "$corps" == "{"* ]]; then bon "$fiche répond en JSON"
+    else mauvais "$fiche ne répond pas en JSON : chemin public manquant dans le hub, ou guichet pas branché"; fi
+  done
+  read -r code redir <<<"$(code_de -X POST -H 'Content-Type: application/json' -d '{"redirect_uris":["https://claude.ai/api/mcp/auth_callback"],"client_name":"verifier-site"}' "$URL/api/mcp/oauth/inscription")"
+  [[ "$code" == 20? ]] && bon "inscription d'un client (DCR) → $code" || mauvais "inscription d'un client (DCR) → $code (attendu 201)"
+  read -r code redir <<<"$(code_de "$URL/api/mcp/oauth/autoriser")"
+  if [[ "$code" =~ ^30[0-9]$ && ( "$redir" == *"auth.$DOMAINE"* || "$redir" == *"/outpost.goauthentik.io/"* ) ]]; then
+    bon "la page « Autoriser Claude ? » reste derrière la connexion"
+  else
+    mauvais "/api/mcp/oauth/autoriser répond $code sans connexion : ne le mets PAS dans les chemins publics"
+  fi
+fi
+
 echo; echo "2. En direct sur l'adresse locale"
 read -r code redir <<<"$(code_de "http://$CIBLE/")"
 if [ "$code" = "000" ]; then
@@ -71,6 +99,7 @@ if [ -n "$PRIVEE" ]; then
   case "$code" in
     401|403|30?) bon "$PRIVEE refuse de faux en-têtes sans la clé ($code)" ;;
     000) mauvais "$PRIVEE ne répond pas" ;;
+    404|405) mauvais "$PRIVEE n'existe pas en GET ($code) : donne une page privée qui répond en GET" ;;
     *) mauvais "$PRIVEE accepte de faux en-têtes ($code) : l'app doit vérifier X-Passerelle-Cle" ;;
   esac
 else

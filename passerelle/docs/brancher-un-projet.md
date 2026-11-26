@@ -18,12 +18,12 @@ se télécharge aussi depuis le hub : **Plus → Brancher un projet**.
 | **Une personne**, dans un navigateur | `https://recettes.super-nono.cc` | Authentik (connexion), puis l'app (en-tête secret) | `utilisateur()` |
 | **Un outil de ton réseau** (autre site, Home Assistant, script) | `http://192.168.1.60:3000` en direct | le pare-feu (IP autorisée), puis l'app (jeton) | `machine()` |
 | **Un service d'Internet** (API, webhook, raccourci iPhone) | `https://recettes.super-nono.cc/api/...` sur un chemin public | l'app seule (jeton ou signature) | `machine()`, `signature_valide()` |
-| **Claude, par MCP** | `https://recettes.super-nono.cc/mcp`, chemin public | Authentik (connexion OAuth), puis l'app (jeton) | `@mcp_requis`, `utilisateur()` |
+| **Claude, par MCP** | `https://recettes.super-nono.cc/api/mcp`, chemin public | le guichet OAuth du site (connexion Authentik à « Autoriser ? »), puis l'app (jeton signé) | `brancher_mcp`, `@mcp_requis` |
 
 Retiens une seule règle : **Authentik ne protège d'office que les personnes dans
 un navigateur.** Tout ce qui passe par l'adresse locale ou par un chemin public
 arrive sans vérification, et c'est ton application qui décide (pour le MCP, le
-kit vérifie le jeton OAuth auprès d'Authentik à ta place).
+kit vérifie le jeton OAuth du site à ta place).
 
 ---
 
@@ -148,63 +148,56 @@ chose d'inoffensif (un `/sante` qui répond « ok »).
 
 ---
 
-## 4. Les connexions MCP : « Se connecter » avec ton compte
+## 4. Les connexions MCP : « Se connecter » dans Claude
 
-Claude se connecte à tes serveurs MCP comme une personne : avec **ton compte de
-la passerelle**, sans en-tête ni jeton à copier.
+Tout est détaillé dans **[`mcp-oauth.md`](mcp-oauth.md)** (le document à donner
+à Claude quand il développe un MCP). En bref :
 
-**Dans Claude** (claude.ai, appli téléphone ou bureau) : Paramètres → Connecteurs →
-Ajouter un connecteur personnalisé → adresse `https://recettes.super-nono.cc/mcp`
-→ **Se connecter**. La page de connexion de la passerelle s'ouvre (ou rien du
-tout si tu es déjà connecté), et c'est fini. Claude renouvelle seul la connexion
-pendant 30 jours.
-
-**Dans Claude Code** : `claude mcp add --transport http recettes https://recettes.super-nono.cc/mcp`,
-puis `/mcp` → Se connecter. Même chose, le navigateur s'ouvre.
-
-### Comment ça marche
+- **Dans Claude** : Paramètres → Connecteurs → Ajouter un connecteur personnalisé
+  → `https://recettes.super-nono.cc/api/mcp`, **Client ID et secret vides** →
+  Se connecter → connexion Authentik (rien si tu l'es déjà) → « Autoriser ».
+  **Claude Code** : `claude mcp add --transport http recettes https://recettes.super-nono.cc/api/mcp`, puis `/mcp`.
+- **Le site est son propre guichet OAuth** (modèle RecipeLog) : fiches de
+  découverte, inscription (DCR et CIMD), page « Autoriser ? », jetons signés
+  (1 h, renouvelés 60 jours). Rien à créer dans Authentik.
+- **La page « Autoriser ? » reste derrière Authentik** : c'est là que tu te
+  connectes. Le reste du guichet passe par les chemins publics.
+- **Bouton « Déconnecter Claude »** : coupe d'un coup tous les connecteurs du site.
+- Les jetons `SERVICE_JETONS` restent acceptés sur `/api/mcp`, pour un script.
 
 ```
-Claude ──POST /mcp──────────────────────────▶ site : 401 « connexion requise »
-Claude ──/.well-known/oauth-protected-resource▶ site : « mon serveur de connexion, c'est moi »
-Claude ──/.well-known/oauth-authorization-server▶ site : « connecte-toi chez auth.super-nono.cc »
-Claude ──/oauth/register────────────────────▶ site : « ton identifiant est claude-mcp »
-Toi    ──page de connexion Authentik (Google ou mot de passe)──▶ jeton pour Claude
-Claude ──POST /mcp + Authorization: Bearer <jeton>──▶ site : vérifie le jeton chez Authentik → c'est Noë
+Claude ──POST /api/mcp──────────────────────────────▶ site : 401 + où se connecter
+Claude ──/.well-known/… puis /api/mcp/oauth/inscription▶ site : fiches, identifiant cl_…
+Toi    ──/api/mcp/oauth/autoriser (Authentik, puis « Autoriser ? »)──▶ code pour Claude
+Claude ──/api/mcp/oauth/jeton (PKCE)────────────────▶ site : jeton ra_… signé
+Claude ──POST /api/mcp + Authorization: Bearer ra_…──▶ site : vérifie la signature → c'est Noë
 ```
-
-- La passerelle crée dans Authentik un client OAuth unique, `claude-mcp`, partagé
-  par tous les sites (`installer.sh` / `mettre-a-jour.sh` le font).
-- Authentik n'accepte que les adresses de retour de Claude (`claude.ai`, `claude.com`)
-  et de Claude Code (`localhost`) : personne d'autre ne peut récupérer un jeton.
-- Le site sait **qui** utilise le MCP (`utilisateur()` dans la route `/mcp`) :
-  tu peux réserver un outil aux admins avec `u.admin`.
-- Les jetons `SERVICE_JETONS` restent acceptés sur `/mcp`, pour un script.
 
 ### Ce que le site doit faire
 
-1. Chemins publics dans le hub : `/mcp`, `/.well-known`, `/oauth` (déjà dans les
-   valeurs par défaut des nouveaux sites ; à ajouter aux sites existants).
-2. Dans le code, avec `passerelle_auth.py` et Flask :
+1. Chemins publics dans le hub (valeurs par défaut des nouveaux sites) :
+   `/api/mcp$`, `/api/mcp/oauth/inscription`, `/api/mcp/oauth/jeton`,
+   `/.well-known/oauth-protected-resource`, `/.well-known/oauth-authorization-server`.
+   Le `$` final veut dire « ce chemin exactement » : `/api/mcp/oauth/autoriser` reste protégé.
+2. Code :
 
 ```python
-from passerelle_auth import brancher_mcp, mcp_requis, utilisateur
+import passerelle_auth as pa
 
-brancher_mcp(app)            # les trois adresses de découverte + /oauth/register
+pa.brancher_mcp(app, nom="Recettes")   # tout le guichet OAuth
 
-@app.post("/mcp")
-@mcp_requis                  # 401 + « Se connecter » si pas de jeton valide
+@app.route("/api/mcp", methods=["GET", "POST", "OPTIONS"])
+@pa.mcp_requis                          # 401 + « Se connecter » si pas de jeton valide
 def mcp():
-    u = utilisateur()        # la personne connectée dans Claude
+    u = pa.utilisateur()                # la personne connectée dans Claude (None pour une machine)
     ...
 ```
 
-   En TypeScript, `passerelle-auth.ts` donne `mcpRessource`, `mcpServeur`,
-   `mcpEnregistrer`, `mcpVerifier` et `mcpEnteteRefus`, avec un exemple Express à la fin du fichier.
-   Si ton serveur MCP utilise le SDK officiel, place ces routes et la
-   vérification devant lui.
-3. Dans le `.env` du site : `PASSERELLE_URL_SITE=https://recettes.super-nono.cc`
-   (et `PASSERELLE_AUTH_URL` si le domaine change).
+   En TypeScript : `guichetMcp(req, "Recettes")` en tête du routeur et
+   `accesMcp(req)` dans la route `/api/mcp` (exemples Next.js et Express en bas du fichier).
+3. `.env` : `PASSERELLE_URL_SITE=https://recettes.super-nono.cc`,
+   `PASSERELLE_MCP_SECRET=` (`openssl rand -hex 32`), et si besoin
+   `PASSERELLE_MCP_POUR=tous` (par défaut seuls les admins peuvent brancher Claude).
 
 ## 5. Un nouveau projet, du début à la fin
 
@@ -212,9 +205,9 @@ def mcp():
 2. Copie `passerelle_auth.py` (ou `.ts`) et mets dans son `.env` :
    `PASSERELLE_CLE=...` (hub → Brancher un projet) et, si besoin, `SERVICE_JETONS=...`.
 3. Pages : `@connexion_requise` (ou `@admin_requis`). API : `@personne_ou_machine`.
-   MCP : `brancher_mcp(app)` + `@mcp_requis`. Webhooks : signature.
+   MCP : `brancher_mcp(app)` + `@mcp_requis` sur `/api/mcp` ([`mcp-oauth.md`](mcp-oauth.md)). Webhooks : signature.
 4. Hub → Sites → **Ajouter** : sous-domaine, IP:port, accès, chemins publics
-   (par défaut `/api/notify`, `/mcp`, `/.well-known`, `/oauth`).
+   (les valeurs par défaut couvrent `/api/notify` et le guichet MCP).
 5. Pare-feu Proxmox du LXC : la passerelle + les appelants locaux.
 6. Sur la passerelle : `hub/hub/static/kit/verifier-site.sh recettes 192.168.1.60:3000 --page-privee /une/page`.
 7. Colle `CLAUDE-passerelle.md` dans le `CLAUDE.md` du projet.
