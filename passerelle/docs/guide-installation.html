@@ -335,7 +335,7 @@ docker compose up -d</pre><button class="copier" type="button">Copier</button></
     <p class="note att"><b>Une seule fois, avant tout :</b> <span class="chemin">Centre de données → Pare-feu</span> → ajoute deux règles « Entrée, ACCEPT » depuis ton réseau (source <code>192.168.1.0/24</code>), ports <code>8006</code> et <code>22</code>. Ensuite seulement <span class="chemin">Options → Pare-feu : Oui</span>. Sinon tu risques de perdre l'accès à Proxmox.</p>
     <p>Puis pour chaque LXC de site :</p><ol>
       <li>Le CT → <span class="chemin">Pare-feu → Ajouter</span> : Entrée, ACCEPT, source <code>192.168.1.40</code> (IP de la passerelle), port de destination = port du site.</li>
-      <li>Ajoute aussi SSH depuis ton réseau, et les machines qui appellent le site en direct (par exemple Home Assistant vers BotPanel).</li>
+      <li>Ajoute aussi SSH depuis ton réseau, et les machines qui appellent le site en direct sur son adresse locale. <b>BotPanel en premier</b> : tous tes sites lui envoient leurs notifications, donc autorise leurs IP (ou tout ton réseau) sur son port. Le hub explique tout ça dans <span class="chemin">Plus → Brancher un projet</span>.</li>
       <li><span class="chemin">Pare-feu → Options</span> : Pare-feu <b>Oui</b>, politique d'entrée <b>DROP</b>.</li>
       <li>Vérifie : le site marche par <code>https://…super-nono.cc</code>, mais plus en tapant son IP depuis ton PC.</li>
     </ol></div></div>

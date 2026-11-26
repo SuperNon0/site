@@ -284,6 +284,35 @@
     }));
   }
 
+  /* ------------------------------------------------------------ brancher un projet */
+  function brancher() {
+    const voir = $("#cle-voir");
+    if (voir) {
+      const texte = $("#cle-texte");
+      voir.addEventListener("click", () => {
+        const cache = texte.textContent === texte.dataset.cache;
+        texte.textContent = cache ? voir.dataset.cle : texte.dataset.cache;
+        voir.lastChild.textContent = cache ? "Cacher" : "Voir";
+      });
+    }
+    const creer = $("#jeton-creer");
+    if (!creer) return;
+    const nom = $("#jeton-nom"), res = $("#jeton-res");
+    const generer = () => {
+      const n = (nom.value || "").toLowerCase().normalize("NFD").replace(/[^a-z0-9_-]+/g, "").slice(0, 30);
+      if (!n) { Encre.toastErr("Écris d'abord qui va appeler (par exemple homeassistant)."); nom.focus(); return; }
+      const octets = crypto.getRandomValues(new Uint8Array(32));
+      const jeton = btoa(String.fromCharCode(...octets)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      $("#jeton-env").textContent = `SERVICE_JETONS=${n}:${jeton}`;
+      $("#jeton-entete").textContent = `Authorization: Bearer ${jeton}`;
+      res.hidden = false;
+    };
+    creer.addEventListener("click", generer);
+    nom.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); generer(); } });
+    $("#jeton-copier-env").addEventListener("click", (e) => Encre.copier($("#jeton-env").textContent, e.currentTarget));
+    $("#jeton-copier-entete").addEventListener("click", (e) => Encre.copier($("#jeton-entete").textContent, e.currentTarget));
+  }
+
   /* ------------------------------------------------------------ démarrage */
   document.addEventListener("DOMContentLoaded", () => {
     if (!window.Encre) return;
@@ -295,6 +324,7 @@
     listeSites();
     demandes();
     membres();
+    brancher();
     $$("[data-copier]").forEach((b) => b.addEventListener("click", () => Encre.copier(b.dataset.copier, b)));
     $$(".anim").forEach((el) => Encre.animerEntree(el));
     if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("/sw.js").catch(() => {});

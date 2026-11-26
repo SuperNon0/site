@@ -1,0 +1,78 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Brancher un projet · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+{%- set ex = "recettes." ~ cfg.DOMAINE -%}
+<div class="page-h"><h1 class="page-t">Brancher un projet</h1></div>
+<p class="intro-p">Ce qu'il faut pour qu'un site, actuel ou futur, fonctionne derrière la passerelle : la clé à lui donner, des jetons pour les machines, et le code prêt à copier.</p>
+
+<div class="hub-brancher anim">
+
+  <section class="carte hub-bloc">
+    <h2 class="sec-t">{{ ic("key", "s22 acc") }}La clé de la passerelle</h2>
+    <p class="hub-aide">Authentik l'ajoute à chaque visite d'une personne connectée (en-tête <code>X-Passerelle-Cle</code>). Le site s'en sert pour savoir que les en-têtes <code>X-Authentik-*</code> sont vrais. À mettre dans le <code>.env</code> de chaque site, jamais dans le code.</p>
+    {% if cfg.PASSERELLE_CLE %}
+    <div class="copie hub-cle"><code id="cle-texte" data-cache="PASSERELLE_CLE={{ '•' * 24 }}">PASSERELLE_CLE={{ '•' * 24 }}</code>
+      <button type="button" class="btn sm gh" id="cle-voir" data-cle="PASSERELLE_CLE={{ cfg.PASSERELLE_CLE }}">{{ ic("eye", "s16") }}Voir</button>
+      <button type="button" class="btn sm" data-copier="PASSERELLE_CLE={{ cfg.PASSERELLE_CLE }}">{{ ic("copy", "s16") }}Copier</button></div>
+    {% else %}
+    <div class="bandeau-c">{{ ic("alert", "s18") }}<span><code>PASSERELLE_CLE</code> est vide dans le <code>.env</code> de la passerelle. Relance <code>./installer.sh</code>, il la génère.</span></div>
+    {% endif %}
+  </section>
+
+  <section class="carte hub-bloc">
+    <h2 class="sec-t">{{ ic("zap", "s22 acc") }}Un jeton pour une machine</h2>
+    <p class="hub-aide">Pour un outil qui appelle un site sans personne derrière : un autre site sur l'adresse locale, Home Assistant, un script, un connecteur MCP. Rien n'est enregistré ici : copie les deux lignes tout de suite.</p>
+    <div class="hub-champ">
+      <label class="lbl" for="jeton-nom">Qui va appeler ?</label>
+      <div class="ligne hub-jeton-l">
+        <input class="input" id="jeton-nom" type="text" placeholder="homeassistant" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30">
+        <button type="button" class="btn pri" id="jeton-creer">{{ ic("sparkle", "s18") }}Créer</button>
+      </div>
+    </div>
+    <div id="jeton-res" hidden>
+      <div class="reg-l"><div class="tx"><b>Dans le .env du site appelé</b><span>Ajoute-le à la liste, séparé par une virgule.</span></div></div>
+      <div class="copie"><code id="jeton-env"></code><button type="button" class="btn sm" id="jeton-copier-env">{{ ic("copy", "s16") }}Copier</button></div>
+      <div class="reg-l"><div class="tx"><b>Chez l'appelant</b><span>En-tête à envoyer à chaque appel. Pour un connecteur claude.ai : ajoute <code>?cle=</code> et le jeton à l'adresse du /mcp.</span></div></div>
+      <div class="copie"><code id="jeton-entete"></code><button type="button" class="btn sm" id="jeton-copier-entete">{{ ic("copy", "s16") }}Copier</button></div>
+    </div>
+  </section>
+
+  <div>
+    <div class="faq-g">Comment on entre dans un site</div>
+    <div class="faq">
+      <details open><summary>{{ ic("user") }}Une personne, dans un navigateur{{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p>Adresse : <code>https://{{ ex }}</code>. Authentik connecte la personne (une fois pour tous les sites), puis ajoute son e-mail, son nom et ses groupes dans <code>X-Authentik-*</code>, avec la clé. Le site n'a plus de page de connexion : il lit <code>utilisateur()</code>.</p>
+        <p>Se déconnecter : lien vers <code>/outpost.goauthentik.io/sign_out</code>. Qui a le droit d'entrer : se règle dans Sites (Membres ou Admins).</p>
+      </div></details>
+      <details><summary>{{ ic("wifi") }}Un outil sur l'adresse locale{{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p>L'adresse locale (<code>http://192.168.1.60:3000</code>) marche toujours, rien ne change dans le réseau. Ce qui change : le pare-feu Proxmox du site appelé ne laisse entrer que la passerelle et les machines que tu ajoutes.</p>
+        <p>Pour chaque site appelé en direct (BotPanel en premier, car tous tes sites lui envoient des notifications), ajoute une règle ACCEPT sur son port pour chaque appelant, ou un IPSet commun. Ces appels ne passent pas par Authentik : si l'appel lit ou modifie des données, exige un jeton.</p>
+      </div></details>
+      <details><summary>{{ ic("cloud") }}Un service d'Internet (API, webhook){{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p>Ajoute le chemin dans <b>Sites → le site → Chemins ouverts sans connexion</b> (par exemple <code>/api/github</code>). Authentik laisse alors tout passer, sans rien vérifier : le site doit vérifier un jeton (<code>Authorization: Bearer</code>) ou une signature (<code>signature_valide()</code>, format BotPanel).</p>
+        <p>Une machine ne peut pas utiliser une adresse protégée : Authentik lui répondrait par la page de connexion.</p>
+      </div></details>
+      <details><summary>{{ ic("plug") }}Un client MCP (Claude){{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p>Claude appelle depuis Internet : <code>/mcp</code> doit être un chemin public (c'est le réglage par défaut) et l'adresse du connecteur est <code>https://{{ ex }}/mcp</code>.</p>
+        <p>Le serveur MCP se protège lui-même : OAuth s'il le gère déjà, sinon un jeton. Les connecteurs claude.ai n'envoient pas d'en-tête : mets le jeton dans l'adresse (<code>/mcp?cle=…</code>). Claude Code, lui, envoie l'en-tête : <code>claude mcp add --transport http nom https://{{ ex }}/mcp --header "Authorization: Bearer …"</code>.</p>
+      </div></details>
+    </div>
+  </div>
+
+  <section class="carte hub-bloc">
+    <h2 class="sec-t">{{ ic("download", "s22 acc") }}Le code prêt à copier</h2>
+    <div class="liste-r">
+      <a class="li" href="{{ url_for('static', filename='kit/passerelle_auth.py') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">passerelle_auth.py<small>Python, Flask ou autre : personnes, jetons, signatures</small></span></a>
+      <a class="li" href="{{ url_for('static', filename='kit/passerelle-auth.ts') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">passerelle-auth.ts<small>Node et TypeScript : Next.js, Express…</small></span></a>
+      <a class="li" href="{{ url_for('static', filename='kit/CLAUDE-passerelle.md') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">CLAUDE-passerelle.md<small>À coller dans le CLAUDE.md du projet : Claude saura le brancher</small></span></a>
+      <a class="li" href="{{ url_for('static', filename='kit/verifier-site.sh') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">verifier-site.sh<small>Vérifie un site branché, depuis la passerelle</small></span></a>
+    </div>
+    <div class="bloc-code"># Sur la passerelle, une fois le site ajouté :
+cd /opt/site/passerelle
+hub/hub/static/kit/verifier-site.sh recettes 192.168.1.60:3000 --page-privee /une/page</div>
+    <p class="hub-aide">Le guide complet est dans le dépôt : <code>passerelle/docs/brancher-un-projet.md</code>.</p>
+  </section>
+
+</div>
+{% endblock %}

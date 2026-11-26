@@ -276,6 +276,12 @@ def admin_journal():
     return render_template("admin_journal.html", lignes=lignes, page="journal")
 
 
+@bp.get("/admin/brancher")
+@admin
+def admin_brancher():
+    return render_template("admin_brancher.html", page="brancher")
+
+
 # ================================================================ API (admins)
 def _qui() -> str:
     return visiteur().email
