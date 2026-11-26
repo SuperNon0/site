@@ -70,6 +70,18 @@ SLUG_INVITATION = "hub-invitation"
 SLUG_RECUPERATION = "hub-recuperation"
 SLUG_GOOGLE_INCONNU = "hub-google-sans-compte"
 
+# Connexion des clients MCP (Claude) par OAuth : un seul client « public » (PKCE, sans secret),
+# partagé par tous les serveurs MCP des sites. Seules ces adresses de retour sont acceptées.
+SLUG_MCP = "mcp"
+CLIENT_MCP = "claude-mcp"
+RETOURS_MCP = [
+    ("strict", "https://claude.ai/api/mcp/auth_callback"),
+    ("strict", "https://claude.com/api/mcp/auth_callback"),
+    ("regex", r"^http://localhost:\d+/callback$"),      # Claude Code, sur ton ordinateur
+    ("regex", r"^http://127\.0\.0\.1:\d+/callback$"),
+]
+SCOPES_MCP = ["openid", "email", "profile", "offline_access"]
+
 
 
 def etape(texte: str) -> None:
@@ -335,7 +347,7 @@ class Configurateur:
             "internal_host_ssl_validation": False, "skip_path_regex": SKIP_HUB,
             "property_mappings": mappings, "access_token_validity": self.cfg.DUREE_SESSION,
         })
-        app = self.assurer("/core/applications/", {"slug": "hub"}, {
+        app = self.assurer("/core/applications/", {"slug": "hub", "superuser_full_list": True}, {
             "name": "Hub", "slug": "hub", "provider": prov["pk"], "meta_launch_url": self.cfg.HUB_URL,
             "meta_description": "Tous les sites", "policy_engine_mode": "any",
         }, cle="slug")
@@ -346,6 +358,34 @@ class Configurateur:
         config["authentik_host_browser"] = ""
         self.ak.patch(f"/outposts/instances/{op['pk']}/", {"config": config})
         ok(f"application « {app['name']} », avant-poste intégré → {self.cfg.AUTH_URL}/")
+
+    def mcp_oauth(self) -> None:
+        etape("Connexion des clients MCP (Claude) par OAuth")
+        mappings = []
+        for scope in SCOPES_MCP:
+            m = self.ak.premier("/propertymappings/provider/scope/",
+                                managed=f"goauthentik.io/providers/oauth2/scope-{scope}")
+            if m:
+                mappings.append(m["pk"])
+        cert = self.ak.premier("/crypto/certificatekeypairs/", name="authentik Self-signed Certificate")
+        prov = self.assurer("/providers/oauth2/", {"name": "MCP (Claude)"}, {
+            "name": "MCP (Claude)",
+            "authorization_flow": self.ak.flux_pk("default-provider-authorization-implicit-consent"),
+            "invalidation_flow": self.ak.flux_pk("default-provider-invalidation-flow"),
+            "client_type": "public", "client_id": CLIENT_MCP,
+            "grant_types": ["authorization_code", "refresh_token"],
+            "redirect_uris": [{"matching_mode": mode, "url": url} for mode, url in RETOURS_MCP],
+            "property_mappings": mappings,
+            "signing_key": cert["pk"] if cert else None,
+            "access_token_validity": "hours=1", "refresh_token_validity": self.cfg.DUREE_SESSION,
+            "include_claims_in_id_token": True, "sub_mode": "user_email",
+        })
+        self.assurer("/core/applications/", {"slug": SLUG_MCP, "superuser_full_list": True}, {
+            "name": "Claude (MCP)", "slug": SLUG_MCP, "provider": prov["pk"],
+            "meta_description": "Connexion de Claude aux serveurs MCP des sites", "policy_engine_mode": "any",
+            "meta_launch_url": "blank://blank",
+        }, cle="slug")
+        ok(f"client OAuth « {CLIENT_MCP} » (émetteur {self.cfg.AUTH_URL}/application/o/{SLUG_MCP}/)")
 
     def compte_admin(self) -> str | None:
         etape("Ton compte administrateur")
@@ -383,6 +423,7 @@ class Configurateur:
         self.compte_service()
         self.entete_secret()
         self.application_hub()
+        self.mcp_oauth()
         mdp = self.compte_admin()
         print("\n✅ Authentik est prêt pour le hub.")
         if mdp:

@@ -22,7 +22,7 @@
 
   <section class="carte hub-bloc">
     <h2 class="sec-t">{{ ic("zap", "s22 acc") }}Un jeton pour une machine</h2>
-    <p class="hub-aide">Pour un outil qui appelle un site sans personne derrière : un autre site sur l'adresse locale, Home Assistant, un script, un connecteur MCP. Rien n'est enregistré ici : copie les deux lignes tout de suite.</p>
+    <p class="hub-aide">Pour un outil qui appelle un site sans personne derrière : un autre site sur l'adresse locale, Home Assistant, un script. Claude n'en a pas besoin : il se connecte avec ton compte. Rien n'est enregistré ici : copie les deux lignes tout de suite.</p>
     <div class="hub-champ">
       <label class="lbl" for="jeton-nom">Qui va appeler ?</label>
       <div class="ligne hub-jeton-l">
@@ -33,7 +33,7 @@
     <div id="jeton-res" hidden>
       <div class="reg-l"><div class="tx"><b>Dans le .env du site appelé</b><span>Ajoute-le à la liste, séparé par une virgule.</span></div></div>
       <div class="copie"><code id="jeton-env"></code><button type="button" class="btn sm" id="jeton-copier-env">{{ ic("copy", "s16") }}Copier</button></div>
-      <div class="reg-l"><div class="tx"><b>Chez l'appelant</b><span>En-tête à envoyer à chaque appel. Pour un connecteur claude.ai : ajoute <code>?cle=</code> et le jeton à l'adresse du /mcp.</span></div></div>
+      <div class="reg-l"><div class="tx"><b>Chez l'appelant</b><span>En-tête à envoyer à chaque appel.</span></div></div>
       <div class="copie"><code id="jeton-entete"></code><button type="button" class="btn sm" id="jeton-copier-entete">{{ ic("copy", "s16") }}Copier</button></div>
     </div>
   </section>
@@ -53,9 +53,11 @@
         <p>Ajoute le chemin dans <b>Sites → le site → Chemins ouverts sans connexion</b> (par exemple <code>/api/github</code>). Authentik laisse alors tout passer, sans rien vérifier : le site doit vérifier un jeton (<code>Authorization: Bearer</code>) ou une signature (<code>signature_valide()</code>, format BotPanel).</p>
         <p>Une machine ne peut pas utiliser une adresse protégée : Authentik lui répondrait par la page de connexion.</p>
       </div></details>
-      <details><summary>{{ ic("plug") }}Un client MCP (Claude){{ ic("chev", "s18 chev") }}</summary><div class="rep">
-        <p>Claude appelle depuis Internet : <code>/mcp</code> doit être un chemin public (c'est le réglage par défaut) et l'adresse du connecteur est <code>https://{{ ex }}/mcp</code>.</p>
-        <p>Le serveur MCP se protège lui-même : OAuth s'il le gère déjà, sinon un jeton. Les connecteurs claude.ai n'envoient pas d'en-tête : mets le jeton dans l'adresse (<code>/mcp?cle=…</code>). Claude Code, lui, envoie l'en-tête : <code>claude mcp add --transport http nom https://{{ ex }}/mcp --header "Authorization: Bearer …"</code>.</p>
+      <details open><summary>{{ ic("plug") }}Claude, par un connecteur MCP{{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p>Claude se connecte avec ton compte, comme toi dans un navigateur. Dans Claude : Paramètres → Connecteurs → Ajouter, colle <code>https://{{ ex }}/mcp</code>, puis <b>Se connecter</b>. La page de connexion de la passerelle s'ouvre, et c'est tout : ni en-tête, ni jeton à copier.</p>
+        <p>Claude Code : <code>claude mcp add --transport http nom https://{{ ex }}/mcp</code>, puis <code>/mcp</code> → Se connecter.</p>
+        <p>Côté site : les chemins publics <code>/mcp</code>, <code>/.well-known</code> et <code>/oauth</code> (déjà là par défaut), puis <code>brancher_mcp(app)</code> et <code>@mcp_requis</code> du kit. Le site sait qui utilise le MCP.</p>
+        <div class="reg-l"><div class="tx"><b>Client OAuth dans Authentik</b><span>claude-mcp · {{ cfg.AUTH_URL }}/application/o/mcp/</span></div></div>
       </div></details>
     </div>
   </div>

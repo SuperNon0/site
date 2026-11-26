@@ -16,8 +16,12 @@ Ce site est publié derrière la passerelle de Noë (Authentik). Règles à resp
   Assistant, webhook, `/mcp`) arrive **sans** Authentik : vérifier un jeton
   (`SERVICE_JETONS`, `Authorization: Bearer`) ou une signature HMAC
   (`signature_valide`). Jamais de chemin public qui modifie des données sans vérification.
-- `/mcp` : chemin public. Protégé par OAuth si l'app l'implémente, sinon par un
-  jeton (`Authorization: Bearer` ou `?cle=` pour les connecteurs claude.ai).
+- MCP : connexion OAuth native avec le compte Authentik (client `claude-mcp`
+  créé par la passerelle). En Flask : `brancher_mcp(app)` puis `@mcp_requis` sur
+  `/mcp` ; en TypeScript : `mcpRessource`, `mcpServeur`, `mcpEnregistrer`,
+  `mcpVerifier`, `mcpEnteteRefus`. Ne pas inventer d'autre système (pas de clé
+  dans l'URL, pas d'OAuth maison). Chemins publics : `/mcp`, `/.well-known`, `/oauth`.
+  `.env` : `PASSERELLE_URL_SITE=https://<site>.super-nono.cc`.
 - Lien « Se déconnecter » : `/outpost.goauthentik.io/sign_out`.
   Lien « Mon compte » : `https://auth.super-nono.cc/if/user/`.
 - Tout nouveau chemin public doit être ajouté dans le hub (Sites → le site →

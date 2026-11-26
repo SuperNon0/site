@@ -24,7 +24,8 @@ SKIP_HUB = "\n".join([
     r"^/sante$",
 ])
 
-CHEMINS_PUBLICS_DEFAUT = "/api/notify\n/mcp"
+# /.well-known et /oauth : la connexion OAuth des clients MCP (voir static/kit/passerelle_auth.py).
+CHEMINS_PUBLICS_DEFAUT = "/api/notify\n/mcp\n/.well-known\n/oauth"
 
 SOUS_DOMAINES_RESERVES = {"auth", "www", "hub"}
 

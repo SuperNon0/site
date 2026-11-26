@@ -5,7 +5,7 @@
 #
 # Options :
 #   --domaine super-nono.cc        (sinon lu dans le .env de la passerelle, sinon super-nono.cc)
-#   --chemins "/api/notify /mcp"   chemins publics à tester (défaut : ces deux-là)
+#   --chemins "/api/notify /mcp"   chemins publics à tester (défaut : /api/notify, /mcp et la découverte OAuth)
 #   --page-privee /api/moi         une adresse de TON app qui doit refuser un inconnu (401/403/302)
 #
 # À lancer depuis le LXC de la passerelle (les appels directs à l'IP y sont autorisés).
@@ -14,7 +14,7 @@ set -uo pipefail
 
 [ $# -ge 2 ] || { sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 SD="$1"; CIBLE="$2"; shift 2
-DOMAINE=""; CHEMINS="/api/notify /mcp"; PRIVEE=""
+DOMAINE=""; CHEMINS="/api/notify /mcp /.well-known/oauth-protected-resource"; PRIVEE=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --domaine) DOMAINE="$2"; shift 2 ;;
