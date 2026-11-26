@@ -1,0 +1,16 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Journal · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+<div class="page-h"><h1 class="page-t">Journal</h1></div>
+<p class="intro-p">Les 200 dernières actions faites dans le hub (le journal complet des connexions est dans Authentik, rubrique Événements).</p>
+{% if lignes %}
+<div class="liste-r anim">
+  {% for l in lignes %}
+  <div class="li"><span class="li-ic">{{ ic("clock") }}</span><span class="tx">{{ l.qui }} {{ l.quoi }}<small>{{ l.quand|date_fr(heure=true) }}</small></span></div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="carte"><div class="vide">{{ ic("clock") }}<b>Rien pour l'instant</b><span>Les ajouts de sites et les réponses aux demandes s'afficheront ici.</span></div></div>
+{% endif %}
+{% endblock %}

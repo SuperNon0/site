@@ -1,0 +1,75 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic, champ %}
+{% block titre %}{{ "Modifier" if site_id else "Ajouter" }} un site · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+<a class="btn sm gh hub-retour" href="/admin/sites">{{ ic("chevl", "s18") }}Sites</a>
+<div class="page-h"><h1 class="page-t">{{ "Modifier « " ~ site.nom ~ " »" if site_id else "Ajouter un site" }}</h1></div>
+
+<form class="hub-form anim" id="form-site" data-site-id="{{ site_id or '' }}" novalidate>
+  <section class="carte hub-bloc">
+    <div class="lbl-mono">Le site</div>
+    <div class="seg hub-type" role="radiogroup" aria-label="Type de site">
+      <button type="button" role="radio" data-type="protege" class="{{ 'on' if site.type == 'protege' }}">{{ ic("shield", "s16") }}Protégé par Authentik</button>
+      <button type="button" role="radio" data-type="lien" class="{{ 'on' if site.type == 'lien' }}">{{ ic("external", "s16") }}Simple lien</button>
+    </div>
+    <input type="hidden" name="type" value="{{ site.type }}">
+    {{ champ("nom", "Nom", site.nom, placeholder="Ex. : Recettes", requis=true, attrs='maxlength="60" autocomplete="off"') }}
+    {{ champ("description", "Description (facultatif)", site.description, placeholder="Ex. : Gestionnaire de recettes", attrs='maxlength="120" autocomplete="off"') }}
+
+    <div data-pour="protege">
+      <div class="hub-champ" data-champ="sous_domaine">
+        <label class="lbl" for="f-sous_domaine">Sous-domaine</label>
+        <div class="hub-suffixe"><input class="input" id="f-sous_domaine" name="sous_domaine" value="{{ site.sous_domaine if site.type == 'protege' }}" placeholder="recettes" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url"><span>.{{ domaine }}</span></div>
+        <p class="hub-aide">L'adresse publique du site. Lettres minuscules, chiffres et tirets.</p>
+        <p class="hub-err" hidden></p>
+      </div>
+      <div class="hub-champ" data-champ="cible">
+        <label class="lbl" for="f-cible">Adresse du site sur ton réseau (IP:port)</label>
+        <div class="hub-suffixe bouton"><input class="input" id="f-cible" name="cible" value="{{ site.cible }}" placeholder="192.168.1.20:8080" autocomplete="off" autocapitalize="off" spellcheck="false" inputmode="url"><button type="button" class="btn sm" id="tester-cible">{{ ic("signal", "s16") }}Tester</button></div>
+        <p class="hub-aide">Là où le LXC du site écoute. Ajoute https:// devant si le site ne parle qu'en https.</p>
+        <p class="hub-err" hidden></p>
+        <p class="statut" id="statut-cible" hidden></p>
+      </div>
+    </div>
+    <div data-pour="lien">
+      {{ champ("lien", "Adresse à ouvrir", site.lien if site.type == "lien", placeholder="https://…", attrs='inputmode="url" autocomplete="off"') }}
+    </div>
+  </section>
+
+  <section class="carte hub-bloc">
+    <div class="lbl-mono">Sur la page d'accueil</div>
+    <div class="hub-champ">
+      <span class="lbl" id="lbl-icone">Icône</span>
+      <div class="hub-icones" role="radiogroup" aria-labelledby="lbl-icone">
+        {% for nom in icones %}
+        <button type="button" role="radio" class="hub-icone{{ ' on' if nom == site.icone }}" data-icone="{{ nom }}" aria-label="{{ nom }}" aria-checked="{{ 'true' if nom == site.icone else 'false' }}">{{ ic(nom) }}</button>
+        {% endfor %}
+      </div>
+      <input type="hidden" name="icone" value="{{ site.icone }}">
+    </div>
+    <div class="hub-deux">
+      {{ champ("categorie", "Rubrique (facultatif)", site.categorie, placeholder="Ex. : Perso", attrs='list="liste-categories" maxlength="40" autocomplete="off"') }}
+      {{ champ("ordre", "Ordre", site.ordre, type="number", aide="Les plus petits d'abord.", attrs='inputmode="numeric"') }}
+    </div>
+    <datalist id="liste-categories">{% for c in categories %}<option value="{{ c }}">{% endfor %}</datalist>
+  </section>
+
+  <section class="carte hub-bloc" data-pour="protege">
+    <div class="lbl-mono">Accès</div>
+    <div class="reg-l"><div class="tx"><b>Réservé aux administrateurs</b><span>Sinon, tous les membres acceptés peuvent l'ouvrir.</span></div><input type="checkbox" class="sw" name="acces_admins" {{ 'checked' if site.acces == 'admins' }} aria-label="Réservé aux administrateurs"></div>
+    <div class="hub-champ" data-champ="chemins_publics">
+      <label class="lbl" for="f-chemins_publics">Chemins ouverts sans connexion <button type="button" class="q" aria-label="Explication" data-t="Chemins ouverts sans connexion" data-d="Pour les appels de machines (Home Assistant, Claude, Proxmox…) qui ne peuvent pas se connecter. Exemple : /api/notify ouvre /api/notify et tout ce qui est dessous. Laisse vide si le site n'en a pas besoin.">?</button></label>
+      <textarea class="input mono" id="f-chemins_publics" name="chemins_publics" rows="3" placeholder="/api/notify&#10;/mcp" spellcheck="false">{{ site.chemins_publics }}</textarea>
+      <p class="hub-aide">Un chemin par ligne. Par défaut : /api/notify et /mcp.</p>
+      <p class="hub-err" hidden></p>
+    </div>
+  </section>
+
+  <div class="hub-actions">
+    {% if site_id %}<button type="button" class="btn dn" id="supprimer-site" data-nom="{{ site.nom }}">{{ ic("trash", "s18") }}Supprimer</button>{% endif %}
+    <span class="esp"></span>
+    <a class="btn gh" href="/admin/sites">Annuler</a>
+    <button type="submit" class="btn pri">{{ ic("check", "s18") }}Enregistrer</button>
+  </div>
+</form>
+{% endblock %}

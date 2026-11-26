@@ -1,0 +1,36 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Demandes · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+{% set libelles = {"en_attente": "En attente", "acceptee": "Invitée", "inscrite": "Inscrite", "refusee": "Refusée"} %}
+<div class="page-h">
+  <h1 class="page-t">Demandes d'accès</h1>
+</div>
+<p class="intro-p">Les personnes qui ont rempli le formulaire. Accepter leur envoie un e-mail pour choisir leur mot de passe (lien valable {{ cfg.INVITATION_JOURS }} jours). Tu peux aussi répondre depuis Discord.</p>
+<div class="chips hub-filtres" role="group" aria-label="Filtrer">
+  <button type="button" class="chip on" data-filtre="en_attente">En attente <span class="n">{{ compte.get("en_attente", 0) }}</span></button>
+  <button type="button" class="chip" data-filtre="acceptee">Invitées <span class="n">{{ compte.get("acceptee", 0) }}</span></button>
+  <button type="button" class="chip" data-filtre="inscrite">Inscrites <span class="n">{{ compte.get("inscrite", 0) }}</span></button>
+  <button type="button" class="chip" data-filtre="refusee">Refusées <span class="n">{{ compte.get("refusee", 0) }}</span></button>
+</div>
+<div class="liste-r anim" id="liste-demandes" {% if not demandes %}hidden{% endif %}>
+  {% for d in demandes %}
+  <div class="li hub-demande" data-statut="{{ d.statut }}" data-id="{{ d.id }}" data-nom="{{ d.prenom }}">
+    <span class="li-ic {{ 'acc' if d.statut == 'en_attente' }}">{{ ic({"en_attente": "hourglass", "acceptee": "mail", "inscrite": "check", "refusee": "x"}[d.statut]) }}</span>
+    <span class="tx">{{ d.prenom }} {{ d.nom }}
+      <small>{{ d.email }} · {{ d.cree_le|date_fr }}{% if d.decide_par and d.statut != 'en_attente' %} · {{ libelles[d.statut]|lower }} par {{ d.decide_par }}{% endif %}</small>
+      {% if d.message %}<small class="hub-message">« {{ d.message }} »</small>{% endif %}
+    </span>
+    <span class="hub-boutons">
+      {% if d.statut == "en_attente" %}
+      <button type="button" class="btn sm okb" data-action="accepter">{{ ic("check", "s16") }}Accepter</button>
+      <button type="button" class="btn sm gh" data-action="refuser" aria-label="Refuser">{{ ic("x", "s16") }}<span class="hub-cache-tel">Refuser</span></button>
+      {% else %}
+      <button type="button" class="ib" data-menu-demande aria-label="Actions">{{ ic("dots", "s18") }}</button>
+      {% endif %}
+    </span>
+  </div>
+  {% endfor %}
+</div>
+<div class="carte" id="demandes-vide" hidden><div class="vide">{{ ic("mail") }}<b>Rien ici</b><span>Aucune demande dans cette liste. Le formulaire public est sur <a class="lien" href="/demande">{{ domaine }}/demande</a>.</span></div></div>
+{% endblock %}

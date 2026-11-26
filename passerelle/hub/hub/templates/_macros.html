@@ -1,0 +1,18 @@
+{# Icône au trait du sprite « encre » #}
+{% macro ic(nom, classe="") -%}
+<svg class="i{{ ' ' ~ classe if classe }}" aria-hidden="true"><use href="#i-{{ nom }}"/></svg>
+{%- endmacro %}
+
+{# Libellé + champ + aide + erreur #}
+{% macro champ(id, label, valeur="", type="text", aide="", erreur="", placeholder="", requis=false, attrs="") -%}
+<div class="hub-champ" data-champ="{{ id }}">
+  <label class="lbl" for="f-{{ id }}">{{ label }}</label>
+  {% if type == "textarea" %}
+  <textarea class="input" id="f-{{ id }}" name="{{ id }}" rows="3" placeholder="{{ placeholder }}" {{ attrs|safe }}>{{ valeur }}</textarea>
+  {% else %}
+  <input class="input" id="f-{{ id }}" name="{{ id }}" type="{{ type }}" value="{{ valeur }}" placeholder="{{ placeholder }}" {% if requis %}required{% endif %} {{ attrs|safe }}>
+  {% endif %}
+  {% if aide %}<p class="hub-aide">{{ aide }}</p>{% endif %}
+  <p class="hub-err" {% if not erreur %}hidden{% endif %}>{{ erreur }}</p>
+</div>
+{%- endmacro %}

@@ -1,0 +1,27 @@
+{% extends "_simple.html" %}
+{% from "_macros.html" import ic, champ %}
+{% block titre %}Demander un accès · {{ cfg.NOM_SITE }}{% endblock %}
+{% block classe_carte %}onboarding-card{% endblock %}
+{% block carte %}
+    <span class="badge">Accès privé</span>
+    <h1 class="h-acces">Demander un accès</h1>
+    {% if depuis_google %}
+    <div class="bandeau-c">{{ ic("info", "s18") }}<span>Ton compte Google n'a pas encore accès. Fais ta demande ici : une fois acceptée, tu pourras entrer avec Google.</span></div>
+    {% else %}
+    <p class="onb-intro">Laisse ton nom et ton e-mail. Dès que ta demande est acceptée, tu reçois un e-mail pour choisir ton mot de passe.</p>
+    {% endif %}
+    {% if erreurs.general %}<div class="bandeau-c hub-bandeau-err">{{ ic("alert", "s18") }}<span>{{ erreurs.general }}</span></div>{% endif %}
+    <form method="post" action="/demande" class="hub-form-demande" novalidate>
+      <input type="hidden" name="jeton" value="{{ jeton }}">
+      <div class="hub-piege" aria-hidden="true"><label>Site web <input name="site_web" tabindex="-1" autocomplete="off"></label></div>
+      <div class="hub-deux">
+        {{ champ("prenom", "Prénom", donnees.prenom, erreur=erreurs.prenom, requis=true, attrs='autocomplete="given-name" maxlength="60"') }}
+        {{ champ("nom", "Nom", donnees.nom, erreur=erreurs.nom, requis=true, attrs='autocomplete="family-name" maxlength="60"') }}
+      </div>
+      {{ champ("email", "Adresse e-mail", donnees.email, type="email", erreur=erreurs.email, requis=true, aide="Si tu as un compte Google, mets son adresse : tu pourras aussi entrer avec Google.", attrs='autocomplete="email" inputmode="email" autocapitalize="off" spellcheck="false" maxlength="254"') }}
+      {{ champ("message", "Un mot pour te présenter (facultatif)", donnees.message, type="textarea", placeholder="Ex. : C'est Julie, la cousine de Noë", attrs='maxlength="500"') }}
+      <button type="submit" class="btn pri w">{{ ic("mail", "s18") }}Envoyer ma demande</button>
+    </form>
+    <p class="access-note">Déjà un compte ? <a class="lien" href="/">Se connecter</a></p>
+{% endblock %}
+{% block pied %}{{ domaine }}{% endblock %}

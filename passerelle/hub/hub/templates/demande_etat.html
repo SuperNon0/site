@@ -1,0 +1,32 @@
+{% extends "_simple.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Ta demande · {{ cfg.NOM_SITE }}{% endblock %}
+{% block carte %}
+  {% if etat in ("nouvelle", "en_attente") %}
+    <div class="access-icon warn">{{ ic("hourglass") }}</div>
+    <h1 class="h-acces">{{ "Demande envoyée" if etat == "nouvelle" else "Demande en attente" }}</h1>
+    {% if demande %}<span class="mail-chip">{{ demande.email }}</span>{% endif %}
+    <p class="access-text">{{ "Ta demande est bien arrivée." if etat == "nouvelle" else "Ta demande a déjà été envoyée, elle attend une réponse." }} Tu recevras un e-mail dès qu'elle sera acceptée.</p>
+    <p class="access-note">Rien d'autre à faire pour l'instant. Pense à regarder dans tes indésirables.</p>
+  {% elif etat == "acceptee" %}
+    <div class="access-icon ok">{{ ic("mail") }}</div>
+    <h1 class="h-acces">Demande acceptée</h1>
+    <span class="mail-chip">{{ demande.email }}</span>
+    <p class="access-text">Bonne nouvelle : tu as reçu un e-mail avec un lien pour choisir ton mot de passe. Ouvre-le pour entrer.</p>
+    <p class="access-note">Pas d'e-mail ? Regarde dans tes indésirables, ou demande à l'administrateur de te le renvoyer.</p>
+  {% elif etat in ("inscrite", "compte") %}
+    <div class="access-icon ok">{{ ic("check") }}</div>
+    <h1 class="h-acces">Tu as déjà un compte</h1>
+    {% if demande %}<span class="mail-chip">{{ demande.email }}</span>{% endif %}
+    <p class="access-text">Connecte-toi avec ton e-mail et ton mot de passe, ou avec Google.</p>
+    <a class="btn pri w" href="/">{{ ic("arrow", "s18") }}Se connecter</a>
+    <a class="forgot-link" href="{{ cfg.AUTH_URL }}/if/flow/hub-recuperation/">Mot de passe oublié ?</a>
+  {% elif etat == "refusee" %}
+    <div class="access-icon err">{{ ic("x") }}</div>
+    <h1 class="h-acces">Accès refusé</h1>
+    <span class="mail-chip">{{ demande.email }}</span>
+    <p class="access-text">Ta demande d'accès n'a pas été acceptée.</p>
+    <p class="access-note">Si tu penses que c'est une erreur, contacte directement l'administrateur.</p>
+  {% endif %}
+{% endblock %}
+{% block pied %}{{ domaine }}{% endblock %}

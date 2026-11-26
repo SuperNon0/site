@@ -1,0 +1,458 @@
+<title>Installer la passerelle</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=DM+Serif+Display&display=swap">
+<style>
+/* Mise en page : une colonne de lecture (téléphone d'abord), un sommaire collant avec la progression,
+   des étapes cochables groupées par phase. Couleurs et polices du kit « Encre ». */
+:root {
+  --bg: #0b0f17; --surface: #0f1520; --card: #141b28; --line: #1e2737; --line2: #2b3549;
+  --text: #e7ebf3; --soft: #aab3c5; --muted: #8a94aa;
+  --accent: #a99bff; --ink: #120d2e; --ok: #4fc0ad; --warn: #efb36b; --danger: #ef7d6b;
+  --acc-dim: color-mix(in srgb, var(--accent) 14%, transparent);
+  --ok-dim: color-mix(in srgb, var(--ok) 14%, transparent);
+  --warn-dim: color-mix(in srgb, var(--warn) 13%, transparent);
+  --f-title: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --f-body: "Archivo", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --f-mono: "DM Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --r-lg: 14px; --r-md: 10px;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) {
+  --bg: #f5f3ee; --surface: #ffffff; --card: #ffffff; --line: #e7e2d7; --line2: #d5cfc1;
+  --text: #1b1d22; --soft: #454a55; --muted: #666b77;
+  --accent: #5a48d0; --ink: #ffffff; --ok: #17725f; --warn: #94560a; --danger: #bf3f2c; color-scheme: light; } }
+:root[data-theme="light"] {
+  --bg: #f5f3ee; --surface: #ffffff; --card: #ffffff; --line: #e7e2d7; --line2: #d5cfc1;
+  --text: #1b1d22; --soft: #454a55; --muted: #666b77;
+  --accent: #5a48d0; --ink: #ffffff; --ok: #17725f; --warn: #94560a; --danger: #bf3f2c; color-scheme: light; }
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font: 16px/1.6 var(--f-body); margin: 0; }
+.page { max-width: 760px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 28px 80px; }
+h1, h2 { font-family: var(--f-title); font-weight: 400; text-wrap: balance; line-height: 1.15; margin: 0; }
+h1 { font-size: clamp(2rem, 7vw, 2.8rem); }
+h2 { font-size: 1.6rem; }
+h3 { font-size: 1.02rem; margin: 0; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); }
+code, .mono { font-family: var(--f-mono); font-size: .88em; }
+:not(pre) > code { background: var(--acc-dim); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+.eyebrow { font: 500 .74rem/1 var(--f-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lead { color: var(--soft); font-size: 1.05rem; max-width: 62ch; }
+
+header.intro { display: grid; gap: 14px; margin-bottom: 26px; }
+.schema { overflow-x: auto; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; }
+.schema pre { margin: 0; font: .82rem/1.55 var(--f-mono); color: var(--soft); white-space: pre; }
+.schema b { color: var(--accent); font-weight: 500; }
+
+.barre { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg);
+  border-bottom: 1px solid var(--line); margin-inline: calc(-1 * max(16px, env(safe-area-inset-left, 0px)));
+  padding: 10px max(16px, env(safe-area-inset-right, 0px)) 10px max(16px, env(safe-area-inset-left, 0px)); display: grid; gap: 8px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.barre-haut { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: .9rem; color: var(--soft); }
+.jauge { height: 6px; border-radius: 99px; background: var(--line); overflow: hidden; }
+.jauge i { display: block; height: 100%; width: 0; background: var(--ok); transition: width .3s; }
+.phases { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.phases a { flex: none; text-decoration: none; color: var(--soft); font: 500 .8rem/1 var(--f-mono); border: 1px solid var(--line2);
+  border-radius: 99px; padding: 8px 11px; min-height: 32px; display: inline-flex; align-items: center; gap: 6px; }
+.phases a.fini { color: var(--ok); border-color: color-mix(in srgb, var(--ok) 45%, transparent); background: var(--ok-dim); }
+.btn-lien { background: none; border: 0; color: var(--muted); font: inherit; font-size: .85rem; cursor: pointer; padding: 6px; min-height: 32px; }
+
+section.phase { margin-top: 44px; display: grid; gap: 16px; scroll-margin-top: 110px; }
+.phase-tete { display: grid; gap: 6px; }
+.phase-tete .meta { display: flex; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+.duree { font: .78rem var(--f-mono); color: var(--muted); }
+
+.etape { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 16px; display: grid; gap: 10px; }
+.etape.fait { border-color: color-mix(in srgb, var(--ok) 40%, transparent); }
+.etape-tete { display: flex; gap: 12px; align-items: flex-start; }
+.case { flex: none; width: 26px; height: 26px; margin-top: 1px; border-radius: 8px; border: 2px solid var(--line2); background: none;
+  cursor: pointer; display: grid; place-items: center; color: var(--bg); padding: 0; }
+.case svg { width: 15px; height: 15px; opacity: 0; }
+.etape.fait .case { background: var(--ok); border-color: var(--ok); }
+.etape.fait .case svg { opacity: 1; }
+.etape.fait h3 { color: var(--soft); }
+.etape-corps { display: grid; gap: 10px; padding-left: 38px; min-width: 0; }
+.etape-corps ol, .etape-corps ul { margin: 0; padding-left: 1.2em; display: grid; gap: 6px; }
+.etape-corps li::marker { color: var(--muted); }
+.chemin { font-weight: 600; color: var(--text); }
+
+.cmd { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); min-width: 0; }
+.cmd pre { margin: 0; padding: 12px 14px; padding-right: 86px; overflow-x: auto; font: .84rem/1.55 var(--f-mono); color: var(--text); }
+.copier { position: absolute; top: 6px; right: 6px; font: 500 .76rem var(--f-body); border: 1px solid var(--line2); color: var(--soft);
+  background: var(--card); border-radius: 8px; padding: 6px 10px; cursor: pointer; min-height: 32px; }
+.copier.ok { color: var(--ok); border-color: var(--ok); }
+
+.note { border-radius: var(--r-md); padding: 10px 12px; font-size: .92rem; background: var(--acc-dim); color: var(--text); }
+.note.att { background: var(--warn-dim); }
+.note b { font-weight: 600; }
+.valeurs { width: 100%; border-collapse: collapse; font-size: .88rem; }
+.tablo { overflow-x: auto; }
+.valeurs td { border-top: 1px solid var(--line); padding: 7px 8px 7px 0; vertical-align: top; }
+.valeurs td:first-child { font-family: var(--f-mono); font-size: .84em; white-space: nowrap; color: var(--accent); }
+.panne { display: grid; gap: 10px; }
+.panne div { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px 14px; display: grid; gap: 4px; }
+.panne b { font-weight: 600; }
+.fin { margin-top: 48px; color: var(--muted); font-size: .88rem; text-align: center; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .jauge i { transition: none; } html { scroll-behavior: auto; } }
+html { scroll-behavior: smooth; }
+</style>
+
+<div class="page">
+<header class="intro">
+  <span class="eyebrow">super-nono.cc · passerelle</span>
+  <h1>Installer la passerelle, pas à pas</h1>
+  <p class="lead">Une seule connexion pour tous tes sites, un hub sur <code>super-nono.cc</code> pour les ouvrir et les gérer, et les demandes d'accès validées depuis Discord. Coche chaque étape au fur et à mesure : ta progression reste dans ce navigateur.</p>
+  <div class="schema"><pre>Téléphone ─▶ Cloudflare ─▶ tunnel ─▶ <b>LXC passerelle</b>
+                                     ├ cloudflared
+                                     ├ Authentik  (auth.super-nono.cc)
+                                     └ hub        (super-nono.cc)
+                                          │
+                       Authentik laisse passer ▼ les personnes connectées
+                 recettes.super-nono.cc ─▶ LXC du site (IP:port)
+                 botpanel.super-nono.cc ─▶ LXC du site (IP:port)</pre></div>
+  <p class="lead">Compte environ 1 h 30 en tout, dont une bonne partie à attendre Google ou les DNS. Garde un bloc-notes ouvert pour coller les valeurs à reporter dans le fichier <code>.env</code>.</p>
+</header>
+
+<nav class="barre" aria-label="Progression">
+  <div class="barre-haut"><span id="compteur">0 étape faite</span><button class="btn-lien" id="raz" type="button">Tout décocher</button></div>
+  <div class="jauge"><i id="jauge"></i></div>
+  <div class="phases" id="phases"></div>
+</nav>
+
+<main id="guide">
+
+<!-- ============================================================ 1 -->
+<section class="phase" id="brevo" data-nom="Brevo">
+  <div class="phase-tete"><span class="eyebrow">Phase 1 · e-mails</span><div class="meta"><h2>Brevo : envoyer depuis super-nono.cc</h2><span class="duree">≈ 15 min</span></div>
+  <p class="lead">Les e-mails d'invitation et de mot de passe oublié partent par ton compte Brevo actuel, depuis une adresse du nouveau domaine.</p></div>
+
+  <div class="etape" data-id="brevo-domaine"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Ajouter le domaine dans Brevo</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Brevo → en haut à droite, ton nom → <span class="chemin">Expéditeurs, domaines et IP dédiées</span> → onglet <span class="chemin">Domaines</span> → <span class="chemin">Ajouter un domaine</span>.</li>
+      <li>Écris <code>super-nono.cc</code>. Brevo propose de s'authentifier <b>automatiquement avec Cloudflare</b> : accepte, c'est le plus simple.</li>
+      <li>Sinon, Brevo affiche 3 ou 4 enregistrements (code Brevo en TXT, DKIM, DMARC). Ajoute-les un par un dans Cloudflare → <span class="chemin">super-nono.cc → DNS → Enregistrements</span>, en laissant le nuage <b>gris</b> (DNS uniquement).</li>
+      <li>Reviens dans Brevo et clique <span class="chemin">Vérifier</span>. Le domaine doit passer en « Authentifié » (parfois quelques minutes).</li>
+    </ol>
+    <p class="note">S'il existe déjà un enregistrement <code>_dmarc</code> sur le domaine, garde-en un seul.</p></div></div>
+
+  <div class="etape" data-id="brevo-exp"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer l'expéditeur</h3></div>
+    <div class="etape-corps"><p>Onglet <span class="chemin">Expéditeurs</span> → <span class="chemin">Ajouter un expéditeur</span> : nom <code>Super Nono</code>, adresse <code>acces@super-nono.cc</code>. Comme le domaine est authentifié, pas besoin de boîte de réception réelle.</p></div></div>
+
+  <div class="etape" data-id="brevo-cle"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Générer une clé SMTP dédiée</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Ton nom → <span class="chemin">SMTP et API</span> → onglet <span class="chemin">SMTP</span> → <span class="chemin">Générer une nouvelle clé SMTP</span>, nom <code>passerelle</code>.</li>
+      <li>Copie la clé tout de suite (elle ne sera plus affichée) et note aussi l'<b>identifiant</b> affiché sur la même page (il ressemble à <code>xxxx@smtp-brevo.com</code>).</li>
+    </ol>
+    <div class="tablo"><table class="valeurs"><tr><td>SMTP_USER</td><td>l'identifiant SMTP</td></tr><tr><td>SMTP_PASSWORD</td><td>la clé que tu viens de créer</td></tr><tr><td>SMTP_FROM</td><td><code>Super Nono &lt;acces@super-nono.cc&gt;</code> (déjà rempli)</td></tr></table></div></div></div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="phase" id="google" data-nom="Google">
+  <div class="phase-tete"><span class="eyebrow">Phase 2 · facultatif</span><div class="meta"><h2>Google : « Se connecter avec Google »</h2><span class="duree">≈ 10 min</span></div>
+  <p class="lead">Tu peux sauter cette phase et la faire plus tard : la connexion par e-mail et mot de passe marche sans.</p></div>
+
+  <div class="etape" data-id="google-projet"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer le projet et l'écran de consentement</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Va sur <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a>, menu du haut → <span class="chemin">Nouveau projet</span>, nom <code>Passerelle</code>.</li>
+      <li>Menu → <span class="chemin">Google Auth Platform</span> (ou <span class="chemin">API et services → Écran de consentement OAuth</span>) → <span class="chemin">Commencer</span> : nom de l'application <code>Super Nono</code>, ton e-mail d'assistance, public <b>Externe</b>.</li>
+      <li>Onglet <span class="chemin">Audience</span> → <span class="chemin">Publier l'application</span> (« En production »). Sans ça, seuls les testeurs que tu ajoutes pourraient se connecter. Les données demandées (e-mail, nom) ne nécessitent aucune validation de Google.</li>
+    </ol></div></div>
+
+  <div class="etape" data-id="google-client"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer l'identifiant client</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Onglet <span class="chemin">Clients</span> → <span class="chemin">Créer un client</span> → type <b>Application Web</b>, nom <code>Authentik</code>.</li>
+      <li>Dans <span class="chemin">URI de redirection autorisés</span>, ajoute exactement :</li>
+    </ol>
+    <div class="cmd"><pre>https://auth.super-nono.cc/source/oauth/callback/google/</pre><button class="copier" type="button">Copier</button></div>
+    <div class="tablo"><table class="valeurs"><tr><td>GOOGLE_CLIENT_ID</td><td>l'ID client (finit par <code>.apps.googleusercontent.com</code>)</td></tr><tr><td>GOOGLE_CLIENT_SECRET</td><td>le code secret du client</td></tr></table></div>
+    <p class="note">Google ne crée pas de compte tout seul : quelqu'un d'inconnu qui clique « Google » est renvoyé vers le formulaire de demande d'accès. Pour toi, mets ton adresse Gmail dans <code>ADMIN_EMAIL</code> et le bouton Google te reconnaîtra.</p></div></div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="phase" id="cloudflare" data-nom="Cloudflare">
+  <div class="phase-tete"><span class="eyebrow">Phase 3 · réseau</span><div class="meta"><h2>Cloudflare : un tunnel pour tout le domaine</h2><span class="duree">≈ 10 min</span></div>
+  <p class="lead">Un seul tunnel envoie <code>super-nono.cc</code> et tous ses sous-domaines vers Authentik. Rien n'est ouvert sur ta box.</p></div>
+
+  <div class="etape" data-id="cf-tunnel"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer le tunnel « passerelle »</h3></div>
+    <div class="etape-corps"><ol>
+      <li><a href="https://one.dash.cloudflare.com/" target="_blank" rel="noopener">Cloudflare Zero Trust</a> → <span class="chemin">Réseaux → Tunnels</span> → <span class="chemin">Créer un tunnel</span> → <b>Cloudflared</b>, nom <code>passerelle</code>.</li>
+      <li>À l'écran « Installer et exécuter un connecteur », choisis Docker et copie la longue valeur qui suit <code>--token</code>. N'exécute pas la commande : la passerelle s'en charge.</li>
+    </ol>
+    <div class="tablo"><table class="valeurs"><tr><td>CLOUDFLARE_TUNNEL_TOKEN</td><td>la valeur après <code>--token</code></td></tr></table></div></div></div>
+
+  <div class="etape" data-id="cf-routes"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Ajouter les deux routes</h3></div>
+    <div class="etape-corps"><p>Étape suivante du tunnel, <span class="chemin">Noms d'hôte publics</span> (ou <span class="chemin">Routes d'application publiées</span>) :</p>
+    <div class="tablo"><table class="valeurs">
+      <tr><td>1</td><td>Sous-domaine <b>vide</b>, domaine <code>super-nono.cc</code>, service <code>HTTP</code> → <code>server:9000</code></td></tr>
+      <tr><td>2</td><td>Sous-domaine <code>*</code>, domaine <code>super-nono.cc</code>, service <code>HTTP</code> → <code>server:9000</code></td></tr>
+    </table></div>
+    <p class="note att"><b>Si Cloudflare refuse</b> parce qu'un enregistrement DNS existe déjà (souvent un <code>A</code> sur la racine), supprime cet enregistrement dans <span class="chemin">DNS</span> puis recommence. Ne supprime pas encore les CNAME de tes sites actuels : ils continuent de marcher comme avant jusqu'à leur migration (phase 9).</p></div></div>
+
+  <div class="etape" data-id="cf-verif"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Vérifier le DNS et Access</h3></div>
+    <div class="etape-corps"><ul>
+      <li><span class="chemin">super-nono.cc → DNS</span> : tu dois voir <code>super-nono.cc</code> et <code>*</code> en CNAME vers <code>…cfargotunnel.com</code>, nuage <b>orange</b>.</li>
+      <li>Aucun enregistrement ne doit exister pour <code>auth</code> : c'est le joker <code>*</code> qui l'attrape.</li>
+      <li>Zero Trust → <span class="chemin">Access → Applications</span> : s'il y a une application sur <code>super-nono.cc</code> ou <code>*.super-nono.cc</code>, supprime-la, sinon tu aurais deux connexions à la suite.</li>
+    </ul></div></div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="phase" id="lxc" data-nom="Proxmox">
+  <div class="phase-tete"><span class="eyebrow">Phase 4 · machine</span><div class="meta"><h2>Proxmox : créer le LXC « passerelle »</h2><span class="duree">≈ 10 min</span></div></div>
+
+  <div class="etape" data-id="lxc-creer"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer le conteneur</h3></div>
+    <div class="etape-corps"><p><span class="chemin">Créer un CT</span>, avec ces réglages :</p>
+    <div class="tablo"><table class="valeurs">
+      <tr><td>Nom</td><td><code>passerelle</code>, non privilégié (case cochée)</td></tr>
+      <tr><td>Modèle</td><td>Debian 13 (ou 12) standard</td></tr>
+      <tr><td>Disque</td><td>16 Go</td></tr>
+      <tr><td>Processeur</td><td>2 cœurs</td></tr>
+      <tr><td>Mémoire</td><td>4096 Mo, swap 512 Mo</td></tr>
+      <tr><td>Réseau</td><td>IP fixe, par exemple <code>192.168.1.40/24</code>, passerelle de ta box. <b>Note cette IP</b>, elle sert au pare-feu des sites.</td></tr>
+    </table></div></div></div>
+
+  <div class="etape" data-id="lxc-options"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Autoriser Docker dans le conteneur</h3></div>
+    <div class="etape-corps"><p>Avant de le démarrer : le CT → <span class="chemin">Options → Fonctionnalités</span> → coche <b>Imbrication</b> (nesting) et <b>keyctl</b>. Coche aussi <span class="chemin">Options → Démarrer au boot</span>. Puis démarre-le.</p></div></div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="phase" id="installer" data-nom="Installation">
+  <div class="phase-tete"><span class="eyebrow">Phase 5 · installation</span><div class="meta"><h2>Installer la passerelle</h2><span class="duree">≈ 15 min</span></div>
+  <p class="lead">Fais cette phase une fois la pull request fusionnée dans <code>main</code>. Tout se passe dans la console du LXC (Proxmox → le CT → <span class="chemin">Console</span>), en root.</p></div>
+
+  <div class="etape" data-id="inst-code"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Récupérer le code</h3></div>
+    <div class="etape-corps">
+    <div class="cmd"><pre>apt update && apt install -y git curl
+git clone https://github.com/SuperNon0/site.git /opt/site
+cd /opt/site/passerelle</pre><button class="copier" type="button">Copier</button></div>
+    <p class="note">Si le dépôt est privé, Git demande un identifiant et un mot de passe : mets ton pseudo GitHub et un jeton (GitHub → <span class="chemin">Settings → Developer settings → Personal access tokens → Fine-grained</span>, accès en lecture seule au contenu du dépôt <code>site</code>).</p></div></div>
+
+  <div class="etape" data-id="inst-env"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Remplir le fichier .env</h3></div>
+    <div class="etape-corps">
+    <div class="cmd"><pre>cp .env.example .env
+nano .env</pre><button class="copier" type="button">Copier</button></div>
+    <p>Remplis ces lignes avec les valeurs notées plus haut. Laisse la section « secrets » vide : le script la remplit tout seul.</p>
+    <div class="tablo"><table class="valeurs">
+      <tr><td>ADMIN_EMAIL</td><td>ton adresse (Gmail si tu veux le bouton Google)</td></tr>
+      <tr><td>CLOUDFLARE_TUNNEL_TOKEN</td><td>phase 3</td></tr>
+      <tr><td>GOOGLE_CLIENT_ID / _SECRET</td><td>phase 2, ou vide</td></tr>
+      <tr><td>SMTP_USER / SMTP_PASSWORD</td><td>phase 1</td></tr>
+      <tr><td>BOTPANEL_URL</td><td>adresse locale de BotPanel, par exemple <code>http://192.168.1.50:8080</code></td></tr>
+    </table></div>
+    <p>Pour enregistrer dans nano : <code>Ctrl</code> + <code>O</code>, <code>Entrée</code>, puis <code>Ctrl</code> + <code>X</code>.</p></div></div>
+
+  <div class="etape" data-id="inst-lancer"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Lancer l'installation</h3></div>
+    <div class="etape-corps">
+    <div class="cmd"><pre>./installer.sh</pre><button class="copier" type="button">Copier</button></div>
+    <p>Le script installe Docker, génère les mots de passe internes, télécharge Authentik (quelques minutes), le démarre, puis le configure : page de connexion aux couleurs du hub, Google, invitations, compte de service du hub.</p>
+    <p class="note att"><b>À la fin, un cadre affiche ton mot de passe provisoire.</b> Note-le : il ne sera plus jamais affiché.</p>
+    <p class="note">Le script peut être relancé sans risque : il ne refait que ce qui manque.</p></div></div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="phase" id="connexion" data-nom="Connexion">
+  <div class="phase-tete"><span class="eyebrow">Phase 6 · premier essai</span><div class="meta"><h2>Première connexion</h2><span class="duree">≈ 5 min</span></div></div>
+
+  <div class="etape" data-id="cx-entrer"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Entrer dans le hub</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Sur ton téléphone, ouvre <a href="https://super-nono.cc" target="_blank" rel="noopener">super-nono.cc</a>. La page de connexion apparaît (sur <code>auth.super-nono.cc</code>).</li>
+      <li>Entre ton e-mail et le mot de passe provisoire. Tu arrives sur l'accueil du hub, vide pour l'instant.</li>
+      <li><span class="chemin">Réglages → Mon compte</span> : change ton mot de passe.</li>
+      <li><span class="chemin">Réglages → Installer</span> : ajoute le hub à l'écran d'accueil, il s'ouvrira comme une application.</li>
+    </ol></div></div>
+
+  <div class="etape" data-id="cx-google"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Essayer Google et le mot de passe oublié</h3></div>
+    <div class="etape-corps"><ul>
+      <li>Déconnecte-toi (<span class="chemin">Réglages → Se déconnecter</span>), puis reconnecte-toi avec <b>Google</b>.</li>
+      <li>Essaie <span class="chemin">Mot de passe oublié</span> : l'e-mail doit arriver depuis <code>acces@super-nono.cc</code>. Regarde dans les spams la première fois.</li>
+    </ul></div></div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section class="phase" id="botpanel" data-nom="BotPanel">
+  <div class="phase-tete"><span class="eyebrow">Phase 7 · demandes d'accès</span><div class="meta"><h2>BotPanel : Accepter / Refuser depuis Discord</h2><span class="duree">≈ 10 min</span></div>
+  <p class="lead">Quelqu'un remplit le formulaire sur <code>super-nono.cc/demande</code>, tu reçois un message Discord avec deux boutons. Il faut la version de BotPanel avec les boutons « webhook » (la mise à jour faite dans l'autre fil) : déploie-la d'abord.</p></div>
+
+  <div class="etape" data-id="bp-notif"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Créer la notification <code>hub_demande</code></h3></div>
+    <div class="etape-corps"><p>BotPanel → <span class="chemin">Notifications → Nouvelle</span> :</p>
+    <div class="tablo"><table class="valeurs">
+      <tr><td>Slug</td><td><code>hub_demande</code></td></tr>
+      <tr><td>Titre</td><td><code>Nouvelle demande d'accès</code></td></tr>
+      <tr><td>Message</td><td><code>**{var:nom_complet}** ({var:email}) demande un accès à {var:site}.</code><br><code>&gt; {var:message}</code></td></tr>
+    </table></div>
+    <p>Variables disponibles : <code>id</code>, <code>prenom</code>, <code>nom</code>, <code>nom_complet</code>, <code>email</code>, <code>message</code>, <code>lien</code>, <code>site</code>.</p></div></div>
+
+  <div class="etape" data-id="bp-boutons"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Ajouter les trois boutons</h3></div>
+    <div class="etape-corps">
+    <div class="tablo"><table class="valeurs">
+      <tr><td>Accepter</td><td>vert, type <b>webhook</b>, adresse ci-dessous, données <code>{"action": "accepter", "id": "{var:id}"}</code></td></tr>
+      <tr><td>Refuser</td><td>rouge, type <b>webhook</b>, même adresse, données <code>{"action": "refuser", "id": "{var:id}"}</code></td></tr>
+      <tr><td>Ouvrir le hub</td><td>gris, type <b>lien</b>, adresse <code>{var:lien}</code></td></tr>
+    </table></div>
+    <div class="cmd"><pre>https://super-nono.cc/api/botpanel/decision</pre><button class="copier" type="button">Copier</button></div>
+    <p>Le hub répond dans Discord, par exemple « Accès accordé à Léa : l'invitation est partie par e-mail ».</p></div></div>
+
+  <div class="etape" data-id="bp-secret"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Partager le secret de signature</h3></div>
+    <div class="etape-corps"><ol>
+      <li>BotPanel → <span class="chemin">Paramètres → Intégrations</span> → copie le <b>secret webhook</b>.</li>
+      <li>Dans la console de la passerelle :</li>
+    </ol>
+    <div class="cmd"><pre>cd /opt/site/passerelle
+nano .env            # BOTPANEL_WEBHOOK_SECRET=le secret
+docker compose up -d</pre><button class="copier" type="button">Copier</button></div>
+    <p class="note">Sans ce secret, le hub refuse les clics (« Signature BotPanel invalide »). C'est ce qui empêche n'importe qui d'accepter une demande à ta place.</p></div></div>
+
+  <div class="etape" data-id="bp-test"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Faire un essai complet</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Dans une fenêtre de navigation privée, ouvre <code>super-nono.cc/demande</code> et fais une demande avec une autre adresse à toi.</li>
+      <li>Le message arrive sur Discord, et la personne reçoit un accusé de réception avec un lien de suivi.</li>
+      <li>Clique <b>Accepter</b> : un e-mail d'invitation part. Le lien ouvre une page où l'on choisit son mot de passe ; le compte est créé dans le groupe « Membres » et la personne arrive sur le hub.</li>
+      <li>Tu peux aussi tout faire depuis le hub : <span class="chemin">Demandes</span> (accepter, refuser, renvoyer l'invitation, effacer).</li>
+    </ol></div></div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="phase" id="sites" data-nom="Sites">
+  <div class="phase-tete"><span class="eyebrow">Phase 8 · tes sites</span><div class="meta"><h2>Ajouter les sites et fermer les portes</h2><span class="duree">≈ 5 min par site</span></div></div>
+
+  <div class="etape" data-id="site-ajout"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Ajouter un site dans le hub</h3></div>
+    <div class="etape-corps"><p>Hub → <span class="chemin">Sites → Ajouter</span> :</p>
+    <div class="tablo"><table class="valeurs">
+      <tr><td>Nom</td><td>ce qui s'affiche sur le bouton</td></tr>
+      <tr><td>Sous-domaine</td><td><code>recettes</code> pour <code>recettes.super-nono.cc</code></td></tr>
+      <tr><td>Adresse</td><td>l'IP et le port du LXC, par exemple <code>192.168.1.60:3000</code> (bouton <span class="chemin">Tester</span> pour vérifier)</td></tr>
+      <tr><td>Accès</td><td>« Membres » ou « Admins seulement »</td></tr>
+      <tr><td>Chemins publics</td><td><code>/api/notify</code> et <code>/mcp</code> par défaut : ils restent joignables sans connexion</td></tr>
+    </table></div>
+    <p>Le hub crée tout seul la protection dans Authentik. Un site peut aussi être un simple lien externe.</p></div></div>
+
+  <div class="etape" data-id="site-pf"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Pare-feu Proxmox : seule la passerelle entre</h3></div>
+    <div class="etape-corps">
+    <p class="note att"><b>Une seule fois, avant tout :</b> <span class="chemin">Centre de données → Pare-feu</span> → ajoute deux règles « Entrée, ACCEPT » depuis ton réseau (source <code>192.168.1.0/24</code>), ports <code>8006</code> et <code>22</code>. Ensuite seulement <span class="chemin">Options → Pare-feu : Oui</span>. Sinon tu risques de perdre l'accès à Proxmox.</p>
+    <p>Puis pour chaque LXC de site :</p><ol>
+      <li>Le CT → <span class="chemin">Pare-feu → Ajouter</span> : Entrée, ACCEPT, source <code>192.168.1.40</code> (IP de la passerelle), port de destination = port du site.</li>
+      <li>Ajoute aussi SSH depuis ton réseau, et les machines qui appellent le site en direct (par exemple Home Assistant vers BotPanel).</li>
+      <li><span class="chemin">Pare-feu → Options</span> : Pare-feu <b>Oui</b>, politique d'entrée <b>DROP</b>.</li>
+      <li>Vérifie : le site marche par <code>https://…super-nono.cc</code>, mais plus en tapant son IP depuis ton PC.</li>
+    </ol></div></div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section class="phase" id="migrer" data-nom="Migrer">
+  <div class="phase-tete"><span class="eyebrow">Phase 9 · ménage</span><div class="meta"><h2>Retirer l'ancien Cloudflare Access, site par site</h2><span class="duree">≈ 10 min par site</span></div>
+  <p class="lead">Fais un site à la fois, dans cet ordre, et passe au suivant seulement quand le premier marche.</p></div>
+
+  <div class="etape" data-id="mig-dns"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Basculer le site sur la passerelle</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Ajoute le site dans le hub (phase 8), avec le même sous-domaine qu'aujourd'hui.</li>
+      <li>Cloudflare → <span class="chemin">DNS</span> : supprime le CNAME propre à ce site. Le joker <code>*</code> prend le relais et l'envoie à la passerelle.</li>
+      <li>Zero Trust → <span class="chemin">Access → Applications</span> : supprime l'application de ce site.</li>
+      <li>Ouvre le site : la connexion de la passerelle apparaît, puis le site.</li>
+    </ol></div></div>
+
+  <div class="etape" data-id="mig-app"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Faire lire la nouvelle identité au site</h3></div>
+    <div class="etape-corps"><p>Les sites qui lisaient le jeton Cloudflare (BotPanel avec <code>cloudflare_access.py</code>, RecipeLogs avec <code>cloudflare.ts</code>) doivent maintenant lire l'en-tête <code>X-Authentik-Email</code>, et seulement si l'en-tête <code>X-Passerelle-Cle</code> vaut le secret <code>PASSERELLE_CLE</code> du <code>.env</code> de la passerelle. Le code prêt à copier (Python et TypeScript) est dans <code>passerelle/docs/migrer-un-site.md</code>. Pour l'afficher :</p>
+    <div class="cmd"><pre>grep PASSERELLE_CLE /opt/site/passerelle/.env</pre><button class="copier" type="button">Copier</button></div>
+    <p class="note">Tant que le site n'est pas modifié, il peut te redemander de te connecter « à l'ancienne ». Demande-moi la modification dans le fil du site concerné.</p></div></div>
+
+  <div class="etape" data-id="mig-tunnel"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Supprimer l'ancien tunnel du site</h3></div>
+    <div class="etape-corps"><ol>
+      <li>Si le site avait son propre tunnel : Zero Trust → <span class="chemin">Réseaux → Tunnels</span> → supprime ses routes, puis le tunnel.</li>
+      <li>Dans le LXC du site :</li>
+    </ol>
+    <div class="cmd"><pre>systemctl disable --now cloudflared
+apt remove -y cloudflared</pre><button class="copier" type="button">Copier</button></div>
+    <p class="note att">Ne touche jamais au tunnel <b>passerelle</b>.</p></div></div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="phase" id="quotidien" data-nom="Au quotidien">
+  <div class="phase-tete"><span class="eyebrow">Ensuite</span><div class="meta"><h2>Au quotidien</h2></div></div>
+
+  <div class="etape" data-id="q-maj"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Mettre à jour (et après chaque changement du .env)</h3></div>
+    <div class="etape-corps">
+    <div class="cmd"><pre>cd /opt/site/passerelle && ./mettre-a-jour.sh</pre><button class="copier" type="button">Copier</button></div>
+    <p>Sauvegarde la base d'Authentik (les 7 dernières dans <code>data/sauvegardes/</code>), récupère le nouveau code, redémarre et reconfigure. Le numéro de version est visible dans <span class="chemin">Réglages</span>.</p></div></div>
+
+  <div class="etape" data-id="q-sauve"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Programmer une sauvegarde du LXC</h3></div>
+    <div class="etape-corps"><p>Proxmox → <span class="chemin">Centre de données → Sauvegarde → Ajouter</span> : le CT <code>passerelle</code>, chaque semaine, mode instantané. Tout ce qui compte est dans <code>/opt/site/passerelle/data</code> et <code>.env</code>.</p></div></div>
+
+  <div class="etape" data-id="q-secours"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Garder la commande de secours</h3></div>
+    <div class="etape-corps"><p>Si tu ne peux plus entrer du tout, ce lien de connexion valable une heure t'ouvre l'administration d'Authentik. Ajoute <code>https://auth.super-nono.cc</code> devant le chemin affiché.</p>
+    <div class="cmd"><pre>cd /opt/site/passerelle && docker compose exec worker ak create_recovery_key 60 akadmin</pre><button class="copier" type="button">Copier</button></div></div></div>
+
+  <div class="panne">
+    <h3>Si quelque chose ne marche pas</h3>
+    <div><b>Erreur Cloudflare 502 ou 1033</b><span>La passerelle est arrêtée ou la route du tunnel est fausse : elle doit être <code>HTTP</code> → <code>server:9000</code>. Regarde <code>docker compose ps</code>.</span></div>
+    <div><b>Google affiche « redirect_uri_mismatch »</b><span>L'URI de redirection chez Google doit être exactement <code>https://auth.super-nono.cc/source/oauth/callback/google/</code>, avec le <code>/</code> final.</span></div>
+    <div><b>Les e-mails n'arrivent pas</b><span>Vérifie <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code> et que le domaine est « Authentifié » dans Brevo, puis lance <code>./mettre-a-jour.sh</code>. Quand l'envoi échoue, le hub te donne le lien d'invitation à transmettre toi-même.</span></div>
+    <div><b>Discord répond « Signature BotPanel invalide »</b><span>Le secret webhook de BotPanel et <code>BOTPANEL_WEBHOOK_SECRET</code> ne sont pas identiques, ou l'heure d'une des machines est fausse de plus de 5 minutes.</span></div>
+    <div><b>Pas de message Discord à une demande</b><span><code>BOTPANEL_URL</code> doit être joignable depuis la passerelle, et la notification doit s'appeler exactement <code>hub_demande</code>.</span></div>
+    <div><b>Voir ce qui se passe</b><span><code>docker compose logs -f --tail 50 server hub</code></span></div>
+  </div>
+</section>
+</main>
+
+<p class="fin">Passerelle · Authentik 2026.8 · hub « Encre »</p>
+</div>
+
+<script>
+(function () {
+  var CLE = "guide-passerelle-v1";
+  var faits = {};
+  try { faits = JSON.parse(localStorage.getItem(CLE) || "{}") || {}; } catch (e) { faits = {}; }
+  function sauver() { try { localStorage.setItem(CLE, JSON.stringify(faits)); } catch (e) {} }
+
+  var check = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg>';
+  var etapes = Array.prototype.slice.call(document.querySelectorAll(".etape"));
+  var phases = Array.prototype.slice.call(document.querySelectorAll("section.phase"));
+  var nav = document.getElementById("phases");
+
+  phases.forEach(function (p) {
+    var a = document.createElement("a");
+    a.href = "#" + p.id; a.textContent = p.dataset.nom; a.dataset.phase = p.id;
+    nav.appendChild(a);
+  });
+
+  function rafraichir() {
+    var n = 0;
+    etapes.forEach(function (e) { var f = !!faits[e.dataset.id]; e.classList.toggle("fait", f); e.querySelector(".case").setAttribute("aria-pressed", f); if (f) n++; });
+    document.getElementById("compteur").textContent = n + " / " + etapes.length + (n > 1 ? " étapes faites" : " étape faite");
+    document.getElementById("jauge").style.width = (etapes.length ? 100 * n / etapes.length : 0) + "%";
+    phases.forEach(function (p) {
+      var es = p.querySelectorAll(".etape"), ok = es.length > 0;
+      es.forEach(function (e) { if (!faits[e.dataset.id]) ok = false; });
+      var lien = nav.querySelector('[data-phase="' + p.id + '"]');
+      if (lien) lien.classList.toggle("fini", ok);
+    });
+  }
+
+  etapes.forEach(function (e) {
+    var b = e.querySelector(".case");
+    b.innerHTML = check;
+    b.addEventListener("click", function () { faits[e.dataset.id] = !faits[e.dataset.id]; sauver(); rafraichir(); });
+  });
+
+  var raz = document.getElementById("raz"), armé = false, minuterie;
+  raz.addEventListener("click", function () {
+    if (!armé) { armé = true; raz.textContent = "Sûr ? Touche encore"; minuterie = setTimeout(function () { armé = false; raz.textContent = "Tout décocher"; }, 3000); return; }
+    clearTimeout(minuterie); armé = false; raz.textContent = "Tout décocher"; faits = {}; sauver(); rafraichir();
+  });
+
+  document.querySelectorAll(".copier").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var pre = b.parentNode.querySelector("pre");
+      var texte = pre.textContent;
+      function fini(ok) { b.textContent = ok ? "Copié" : "Sélectionné"; b.classList.toggle("ok", ok); setTimeout(function () { b.textContent = "Copier"; b.classList.remove("ok"); }, 1600); }
+      function selectionner() { var r = document.createRange(); r.selectNodeContents(pre); var s = getSelection(); s.removeAllRanges(); s.addRange(r); fini(false); }
+      try { navigator.clipboard.writeText(texte).then(function () { fini(true); }, selectionner); } catch (e) { selectionner(); }
+    });
+  });
+
+  rafraichir();
+})();
+</script>

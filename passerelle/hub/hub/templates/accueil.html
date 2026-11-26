@@ -1,0 +1,42 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block contenu %}
+<div class="page-h">
+  <h1 class="page-t">Bonjour {{ v.prenom }}</h1>
+</div>
+{% if v.admin and nb_demandes %}
+<a class="bandeau-c hub-bandeau" href="/admin/demandes">{{ ic("mail", "s18") }}<span><b>{{ nb_demandes }} demande{{ 's' if nb_demandes > 1 }} d'accès</b> en attente : touche pour répondre.</span>{{ ic("chev", "s18") }}</a>
+{% endif %}
+
+{% if nb_sites %}
+<label class="champ hub-filtre">{{ ic("search", "s18") }}<input type="search" id="filtre-sites" placeholder="Filtrer les sites…" aria-label="Filtrer les sites" autocomplete="off"></label>
+<div class="anim" id="liste-sites">
+  {% for categorie, sites in groupes %}
+  <section class="hub-groupe" data-groupe>
+    {% if categorie or groupes|length > 1 %}<div class="sec-h"><h2 class="sec-t">{{ categorie or "Autres" }}</h2></div>{% endif %}
+    <div class="hub-sites">
+      {% for s in sites %}
+      <a class="hub-site" href="{{ s.lien }}" data-nom="{{ (s.nom ~ ' ' ~ s.description ~ ' ' ~ s.sous_domaine)|lower }}">
+        <span class="li-ic acc">{{ ic(s.icone) }}</span>
+        <span class="tx"><b>{{ s.nom }}</b><small>{{ s.description or s.lien.split('//')[-1] }}</small></span>
+        {% if s.acces == "admins" %}<span class="hub-cadenas" title="Visible seulement par les administrateurs">{{ ic("lock", "s16") }}</span>{% endif %}
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="vide" id="filtre-vide" hidden>{{ ic("search") }}<b>Aucun site ne correspond</b><span>Essaie un autre mot.</span></div>
+</div>
+{% else %}
+<div class="carte">
+  <div class="vide">{{ ic("compass") }}<b>Aucun site pour l'instant</b>
+  {% if v.admin %}
+    <span>Ajoute ton premier site : son nom, son sous-domaine et l'adresse de son LXC. Le hub s'occupe d'Authentik.</span>
+    <a class="btn pri sm" href="/admin/sites/nouveau">{{ ic("plus", "s16") }}Ajouter un site</a>
+  {% else %}
+    <span>Les sites apparaîtront ici dès qu'ils seront ajoutés.</span>
+  {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

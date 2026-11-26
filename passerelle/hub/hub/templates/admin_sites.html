@@ -1,0 +1,37 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Sites · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+<div class="page-h">
+  <h1 class="page-t">Sites <span class="n">{{ sites|length }}</span></h1>
+  <span class="esp"></span>
+  <a class="btn pri" href="/admin/sites/nouveau">{{ ic("plus", "s18") }}Ajouter</a>
+</div>
+<p class="intro-p">Chaque site protégé passe par Authentik : il faut être connecté pour l'ouvrir. Le hub crée et supprime tout seul ce qu'il faut dans Authentik.</p>
+{% if erreur_ak %}
+<div class="bandeau-c hub-bandeau-err">{{ ic("alert", "s18") }}<span>{{ erreur_ak }}</span></div>
+{% endif %}
+{% if sites %}
+<div class="liste-r anim">
+  {% for s in sites %}
+  <div class="li hub-li-site" data-site="{{ s.id }}" data-nom="{{ s.nom }}">
+    <span class="li-ic acc">{{ ic(s.icone) }}</span>
+    <a class="tx hub-li-lien" href="/admin/sites/{{ s.id }}">{{ s.nom }}
+      <small>{% if s.type == "lien" %}Lien · {{ s.lien.split('//')[-1] }}{% else %}{{ s.sous_domaine }}.{{ domaine }} → {{ s.cible.split('//')[-1] }}{% endif %}</small>
+    </a>
+    <span class="v">
+      {% if s.type == "lien" %}<span class="hub-etat">{{ ic("external", "s16") }}<span>Lien</span></span>
+      {% elif erreur_ak %}<span class="hub-etat">{{ ic("dot", "s16") }}<span>?</span></span>
+      {% elif etat.get(s.ak_provider) %}<span class="hub-etat ok" title="En place dans Authentik">{{ ic("check", "s16") }}<span>Actif</span></span>
+      {% else %}<button type="button" class="btn xs dn" data-reparer="{{ s.id }}" title="Absent d'Authentik : le remettre">{{ ic("refresh", "s16") }}Réparer</button>
+      {% endif %}
+      {% if s.acces == "admins" %}<span class="hub-etat" title="Réservé aux administrateurs">{{ ic("lock", "s16") }}</span>{% endif %}
+    </span>
+    <button type="button" class="ib" data-menu-site="{{ s.id }}" aria-label="Actions pour {{ s.nom }}">{{ ic("dots", "s18") }}</button>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="carte"><div class="vide">{{ ic("grid") }}<b>Aucun site</b><span>Ajoute le premier : nom, sous-domaine et IP:port du LXC.</span><a class="btn pri sm" href="/admin/sites/nouveau">{{ ic("plus", "s16") }}Ajouter un site</a></div></div>
+{% endif %}
+{% endblock %}

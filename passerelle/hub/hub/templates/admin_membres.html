@@ -1,0 +1,33 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Membres · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+<div class="page-h">
+  <h1 class="page-t">Membres <span class="n">{{ membres|length }}</span></h1>
+  <span class="esp"></span>
+  <a class="btn" href="{{ cfg.lien_admin_authentik }}#/identity/users" target="_blank" rel="noopener">{{ ic("external", "s18") }}<span class="hub-cache-tel">Ouvrir dans </span>Authentik</a>
+</div>
+<p class="intro-p">Les comptes qui peuvent se connecter. Bloquer un membre l'empêche d'entrer partout, tout de suite. Les groupes et les administrateurs se gèrent dans Authentik.</p>
+{% if erreur_ak %}<div class="bandeau-c hub-bandeau-err">{{ ic("alert", "s18") }}<span>{{ erreur_ak }}</span></div>{% endif %}
+{% if membres %}
+<label class="champ hub-filtre">{{ ic("search", "s18") }}<input type="search" id="filtre-membres" placeholder="Chercher un membre…" aria-label="Chercher un membre" autocomplete="off"></label>
+<div class="liste-r anim">
+  {% for m in membres %}
+  <div class="li hub-membre" data-pk="{{ m.pk }}" data-nom="{{ m.nom }}" data-cherche="{{ (m.nom ~ ' ' ~ m.email)|lower }}">
+    <span class="hub-av" aria-hidden="true">{{ m.nom[:1]|upper }}</span>
+    <span class="tx">{{ m.nom }}<small>{{ m.email }}{% if m.derniere %} · vu le {{ m.derniere|date_fr }}{% endif %}</small></span>
+    <span class="v">
+      {% if m.admin %}<span class="role-badge role-super">Admin</span>
+      {% elif not m.actif %}<span class="role-badge role-bloque">Bloqué</span>
+      {% else %}<span class="role-badge role-membre">Membre</span>{% endif %}
+    </span>
+    {% if not m.admin %}
+    <button type="button" class="ib" data-menu-membre data-actif="{{ 'oui' if m.actif else 'non' }}" aria-label="Actions pour {{ m.nom }}">{{ ic("dots", "s18") }}</button>
+    {% else %}<span class="hub-ib-vide"></span>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% elif not erreur_ak %}
+<div class="carte"><div class="vide">{{ ic("users") }}<b>Personne pour l'instant</b><span>Les membres apparaissent ici quand ils ont choisi leur mot de passe.</span></div></div>
+{% endif %}
+{% endblock %}

@@ -8,6 +8,8 @@ et notifications **BotPanel** intégrées.
 
 </div>
 
+> **Nouveau : [`passerelle/`](passerelle/)** — une seule connexion (Authentik) pour tous les sites, avec un hub sur le domaine principal. C'est elle qui remplace Cloudflare Access site par site.
+
 ---
 
 Ce dépôt est un **template**. On le clone pour chaque nouveau projet : le thème,

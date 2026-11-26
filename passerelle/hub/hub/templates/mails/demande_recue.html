@@ -1,0 +1,8 @@
+{% extends "mails/_base.html" %}
+{% block corps %}
+<p style="margin:0 0 12px;">Bonjour {{ demande.prenom }},</p>
+<p style="margin:0 0 16px;">Ta demande d'accès est bien arrivée. Tu recevras un autre e-mail dès qu'elle sera acceptée.</p>
+<p style="margin:0 0 6px;color:#aab3c5;font-size:13.5px;">Pour voir où elle en est :</p>
+<p style="margin:0 0 18px;"><a href="{{ lien_suivi }}" style="color:#a99bff;">Suivre ma demande</a></p>
+<p style="margin:0;color:#8a94aa;font-size:12.5px;">Tu n'as rien demandé ? Ignore simplement cet e-mail.</p>
+{% endblock %}

@@ -1,0 +1,9 @@
+Bonjour {{ demande.prenom }},
+
+Ta demande d'accès à {{ nom_site }} est acceptée. Il te reste à choisir ton mot de passe :
+
+{{ lien }}
+
+Le lien marche une seule fois, pendant {{ jours }} jours. Ensuite, tu pourras entrer avec ton e-mail ({{ demande.email }}) et ce mot de passe.
+
+{{ hub_url }}

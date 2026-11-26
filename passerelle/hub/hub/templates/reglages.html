@@ -1,0 +1,91 @@
+{% extends "_base.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}Réglages · {{ cfg.NOM_SITE }}{% endblock %}
+{% block contenu %}
+<div class="page-h"><h1 class="page-t">Réglages</h1></div>
+<div class="reglages" id="reglages">
+  <div class="reg-liste">
+    <div>
+      <div class="reg-g">Mon compte</div>
+      <div class="liste-r">
+        <a class="li" href="#apparence" data-reg="apparence"><span class="li-ic acc">{{ ic("palette") }}</span><span class="tx">Apparence<small>Style, couleur, thème</small></span>{{ ic("chev", "s18 muted") }}</a>
+        <a class="li" href="#compte" data-reg="compte"><span class="li-ic">{{ ic("user") }}</span><span class="tx">Mon compte<small>{{ v.email }}</small></span>{{ ic("chev", "s18 muted") }}</a>
+        <a class="li" href="#installer" data-reg="installer"><span class="li-ic">{{ ic("download") }}</span><span class="tx">Sur le téléphone<small>Ajouter à l'écran d'accueil</small></span>{{ ic("chev", "s18 muted") }}</a>
+      </div>
+    </div>
+    {% if v.admin %}
+    <div>
+      <div class="reg-g">Administration</div>
+      <div class="liste-r">
+        <a class="li" href="#avance" data-reg="avance"><span class="li-ic">{{ ic("wrench") }}</span><span class="tx">Avancé<small>Authentik, BotPanel, e-mails</small></span>{{ ic("chev", "s18 muted") }}</a>
+      </div>
+    </div>
+    {% endif %}
+    <div>
+      <div class="liste-r">
+        <a class="li dn" href="/deconnexion"><span class="li-ic">{{ ic("logout") }}</span><span class="tx">Se déconnecter<small>De tous les sites</small></span></a>
+      </div>
+    </div>
+  </div>
+  <div class="reg-det">
+    <a class="btn sm gh reg-retour" href="#">{{ ic("chevl", "s18") }}Réglages</a>
+    <section class="carte reg-panneau" data-panneau="apparence">
+      <h2>{{ ic("palette", "s22 acc") }}Apparence</h2>
+      <p class="intro">Tout s'enregistre dès que tu changes un réglage, sur cet appareil.</p>
+      <div class="reg-sec">
+        <div class="lbl-mono">Style</div>
+        <div class="style-choix" data-encre-style role="radiogroup" aria-label="Style">
+          <button type="button" class="style-carte st-encre" data-v="encre" role="radio"><span class="style-ap" aria-hidden="true"><i></i><b></b><b></b><b></b></span><span class="style-nom">Encre</span><span class="style-sous">Net et sobre, couleur d'encre</span></button>
+          <button type="button" class="style-carte st-verre" data-v="verre" role="radio"><span class="style-ap" aria-hidden="true"><i></i><b></b><b></b><b></b></span><span class="style-nom">Verre</span><span class="style-sous">Verre dépoli, reflets et lumière</span></button>
+        </div>
+      </div>
+      <div class="reg-sec">
+        <div class="lbl-mono">Couleur d'accent</div>
+        <div class="pastilles" data-encre-accent role="radiogroup" aria-label="Couleur d'accent">
+          <button type="button" class="past" data-v="or" role="radio"><i></i>Or</button>
+          <button type="button" class="past" data-v="ambre" role="radio"><i></i>Ambre</button>
+          <button type="button" class="past" data-v="corail" role="radio"><i></i>Corail</button>
+          <button type="button" class="past" data-v="menthe" role="radio"><i></i>Menthe</button>
+          <button type="button" class="past" data-v="lavande" role="radio"><i></i>Lavande</button>
+        </div>
+      </div>
+      <div class="reg-sec">
+        <div class="lbl-mono">Thème</div>
+        <div class="seg" data-encre-theme role="group" aria-label="Thème">
+          <button type="button" data-v="auto">Automatique</button><button type="button" data-v="clair">Clair</button><button type="button" data-v="sombre">Sombre</button>
+        </div>
+      </div>
+    </section>
+    <section class="carte reg-panneau" data-panneau="compte" hidden>
+      <h2>{{ ic("user", "s22 acc") }}Mon compte</h2>
+      <p class="intro">Ton compte est le même pour tous les sites. Mot de passe, connexion Google et appareils se règlent dans Authentik.</p>
+      <div class="reg-l"><div class="tx"><b>{{ v.nom or v.email }}</b><span>{{ v.email }}</span></div>{% if v.admin %}<span class="role-badge role-super">Admin</span>{% else %}<span class="role-badge role-membre">Membre</span>{% endif %}</div>
+      <div class="ligne" style="margin-top: 14px">
+        <a class="btn pri" href="{{ cfg.lien_mon_compte }}">{{ ic("key", "s18") }}Mot de passe et Google</a>
+        <a class="btn" href="/deconnexion">{{ ic("logout", "s18") }}Se déconnecter</a>
+      </div>
+    </section>
+    <section class="carte reg-panneau" data-panneau="installer" hidden>
+      <h2>{{ ic("download", "s22 acc") }}Sur le téléphone</h2>
+      <p class="intro">Le hub s'installe comme une appli, sans store.</p>
+      <div class="faq">
+        <details open><summary>{{ ic("help") }}Sur iPhone (Safari){{ ic("chev", "s18 chev") }}</summary><div class="rep"><p>Touche le bouton Partager, puis « Sur l'écran d'accueil ».</p></div></details>
+        <details><summary>{{ ic("help") }}Sur Android (Chrome){{ ic("chev", "s18 chev") }}</summary><div class="rep"><p>Touche les trois points en haut à droite, puis « Installer l'application » ou « Ajouter à l'écran d'accueil ».</p></div></details>
+      </div>
+      <button type="button" class="btn pri" id="installer-pwa" hidden style="margin-top: 14px">{{ ic("download", "s18") }}Installer maintenant</button>
+    </section>
+    {% if v.admin %}
+    <section class="carte reg-panneau" data-panneau="avance" hidden>
+      <h2>{{ ic("wrench", "s22 acc") }}Avancé</h2>
+      <p class="intro">Ce que le hub utilise. Ces réglages se changent dans le fichier .env de la passerelle.</p>
+      <div class="reg-l"><div class="tx"><b>Authentik</b><span>{{ cfg.AUTH_URL }}</span></div><a class="btn sm" href="{{ cfg.lien_admin_authentik }}" target="_blank" rel="noopener">{{ ic("external", "s16") }}Ouvrir</a></div>
+      <div class="reg-l"><div class="tx"><b>Formulaire de demande</b><span>{{ cfg.HUB_URL }}/demande</span></div><button type="button" class="btn sm" data-copier="{{ cfg.HUB_URL }}/demande">{{ ic("copy", "s16") }}Copier</button></div>
+      <div class="reg-l"><div class="tx"><b>BotPanel</b><span>{{ cfg.BOTPANEL_URL or "pas configuré" }} · notification « {{ cfg.BOTPANEL_SLUG_DEMANDE }} »</span></div>{% if cfg.BOTPANEL_URL and cfg.BOTPANEL_WEBHOOK_SECRET %}<span class="statut ok">Prêt</span>{% else %}<span class="statut">À régler</span>{% endif %}</div>
+      <div class="reg-l"><div class="tx"><b>Webhook des boutons Discord</b><span>{{ cfg.HUB_URL }}/api/botpanel/decision</span></div><button type="button" class="btn sm" data-copier="{{ cfg.HUB_URL }}/api/botpanel/decision">{{ ic("copy", "s16") }}Copier</button></div>
+      <div class="reg-l"><div class="tx"><b>E-mails</b><span>{{ cfg.SMTP_FROM or "pas configurés" }}</span></div>{% if cfg.smtp_pret %}<span class="statut ok">Prêt</span>{% else %}<span class="statut">À régler</span>{% endif %}</div>
+      <div class="reg-l"><div class="tx"><b>Version du hub</b><span>{{ version }}</span></div></div>
+    </section>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

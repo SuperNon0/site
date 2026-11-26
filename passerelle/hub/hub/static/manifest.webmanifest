@@ -1,0 +1,16 @@
+{
+  "name": "Super Nono",
+  "short_name": "Super Nono",
+  "description": "Tous les sites, en un seul endroit.",
+  "lang": "fr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0b0f17",
+  "theme_color": "#0b0f17",
+  "icons": [
+    { "src": "/static/icone-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/icone-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/static/icone-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

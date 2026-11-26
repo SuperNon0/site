@@ -1,0 +1,7 @@
+Bonjour {{ demande.prenom }},
+
+Ta demande d'accès à {{ nom_site }} est bien arrivée. Tu recevras un autre e-mail dès qu'elle sera acceptée.
+
+Pour voir où elle en est : {{ lien_suivi }}
+
+Tu n'as rien demandé ? Ignore simplement cet e-mail.
