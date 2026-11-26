@@ -1,0 +1,29 @@
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0b0f17" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f3ee" media="(prefers-color-scheme: light)">
+  <meta name="robots" content="noindex, nofollow">
+  <script>
+    /* Avant l'affichage : style, accent et thème gardés sur cet appareil (rien ne clignote). */
+    try {
+      var p = JSON.parse(localStorage.getItem("encre-apparence") || "{}"), h = document.documentElement;
+      if (p.style === "verre") h.dataset.style = "verre";
+      if (p.accent) h.dataset.accent = p.accent;
+      if (p.theme === "sombre") h.dataset.theme = "dark";
+      else if (p.theme === "clair") h.dataset.theme = "light";
+      else { h.dataset.theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"; h.dataset.encreAuto = ""; }
+    } catch (e) {}
+  </script>
+  <link rel="preload" href="{{ url_for('static', filename='encre/polices/archivo-latin.woff2') }}" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="{{ url_for('static', filename='encre/polices.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='encre/encre.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='encre/verre.css') }}?v={{ version }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='hub.css') }}?v={{ version }}">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="{{ url_for('static', filename='icone-192.png') }}" type="image/png">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icone-192.png') }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <script defer src="{{ url_for('static', filename='encre/encre.js') }}?v={{ version }}"></script>
+  <script defer src="{{ url_for('static', filename='hub.js') }}?v={{ version }}"></script>

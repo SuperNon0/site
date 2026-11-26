@@ -1,0 +1,18 @@
+{%- set mots = cfg.NOM_SITE.split(" ", 1) -%}
+<!doctype html>
+<html lang="fr" data-accent-defaut="lavande" data-style-defaut="encre">
+<head>
+{% include "_head.html" %}
+  <title>{% block titre %}{{ cfg.NOM_SITE }}{% endblock %}</title>
+</head>
+<body class="login-page">
+{% include "_icones.html" %}
+<main class="hub-simple">
+  <div class="login-card {% block classe_carte %}{% endblock %}">
+    <div class="login-logo"><span class="marque grand" aria-hidden="true">{{ cfg.NOM_SITE[:1]|lower }}</span><span class="wm">{{ mots[0]|lower }}{% if mots|length > 1 %}<b>{{ mots[1]|lower }}</b>{% endif %}</span></div>
+{% block carte %}{% endblock %}
+  </div>
+  <p class="hub-pied">{% block pied %}<a href="/">{{ domaine }}</a>{% endblock %}</p>
+</main>
+</body>
+</html>

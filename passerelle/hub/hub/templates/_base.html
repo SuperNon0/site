@@ -1,0 +1,94 @@
+{% from "_macros.html" import ic %}
+{%- set mots = cfg.NOM_SITE.split(" ", 1) -%}
+{%- macro marque(grand=false) -%}
+<span class="marque{{ ' grand' if grand }}" aria-hidden="true">{{ cfg.NOM_SITE[:1]|lower }}</span><span class="wm">{{ mots[0]|lower }}{% if mots|length > 1 %}<b>{{ mots[1]|lower }}</b>{% endif %}</span>
+{%- endmacro -%}
+<!doctype html>
+<html lang="fr" data-accent-defaut="lavande" data-style-defaut="encre">
+<head>
+{% include "_head.html" %}
+  <title>{% block titre %}{{ cfg.NOM_SITE }}{% endblock %}</title>
+</head>
+<body data-page="{{ page|default('') }}" class="{% block classe_body %}{% endblock %}">
+{% include "_icones.html" %}
+<div class="app">
+  <aside class="side" aria-label="Menu principal">
+    <div class="ligne">
+      <a class="brand" href="/" aria-label="{{ cfg.NOM_SITE }}, accueil">{{ marque() }}</a>
+    </div>
+    <button class="side-search" type="button" data-encre-recherche>{{ ic("search", "s18") }}Rechercher…<span class="kbd">Ctrl K</span></button>
+    <nav aria-label="Pages">
+      <a class="side-it" href="/" data-page="accueil">{{ ic("home") }}<span class="nom">Accueil</span></a>
+      {% if v and v.admin %}
+      <a class="side-it" href="/admin/sites" data-page="sites">{{ ic("grid") }}<span class="nom">Sites</span></a>
+      <a class="side-it" href="/admin/demandes" data-page="demandes">{{ ic("mail") }}<span class="nom">Demandes</span>{% if nb_demandes %}<span class="n hub-n">{{ nb_demandes }}</span>{% endif %}</a>
+      <a class="side-it" href="/admin/membres" data-page="membres">{{ ic("users") }}<span class="nom">Membres</span></a>
+      {% endif %}
+      <a class="side-it" href="/reglages" data-page="reglages">{{ ic("gear") }}<span class="nom">Réglages</span></a>
+    </nav>
+    {% if v and v.admin %}
+    <div class="side-lbl">Authentik</div>
+    <div class="side-listes">
+      <a class="side-it" href="{{ cfg.lien_admin_authentik }}" target="_blank" rel="noopener">{{ ic("shield") }}<span class="nom">Utilisateurs et groupes</span>{{ ic("external", "s16 muted") }}</a>
+      <a class="side-it" href="/admin/journal" data-page="journal">{{ ic("clock") }}<span class="nom">Journal</span></a>
+    </div>
+    {% endif %}
+    <div class="side-foot">
+      {% if v %}
+      <div class="side-compte">
+        <span class="av" aria-hidden="true">{{ v.initiale }}</span><span title="{{ v.email }}">{{ v.email }}</span>
+        <a class="ib" href="/deconnexion" title="Se déconnecter" aria-label="Se déconnecter">{{ ic("logout", "s18") }}</a>
+      </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="top">
+      <a class="brand" href="/" aria-label="{{ cfg.NOM_SITE }}, accueil">{{ marque() }}</a>
+      <span class="esp"></span>
+      <button class="ib" type="button" data-encre-recherche aria-label="Rechercher">{{ ic("search") }}</button>
+    </header>
+
+    <main class="pages">
+      <section class="page on">
+{% block contenu %}{% endblock %}
+      </section>
+    </main>
+  </div>
+</div>
+
+<nav class="tabbar" aria-label="Navigation">
+  <a class="tab" href="/" data-page="accueil"><span class="ti">{{ ic("home", "s22") }}</span>Accueil</a>
+  {% if v and v.admin %}
+  <a class="tab" href="/admin/sites" data-page="sites"><span class="ti">{{ ic("grid", "s22") }}</span>Sites</a>
+  <a class="tab" href="/admin/demandes" data-page="demandes"><span class="ti">{{ ic("mail", "s22") }}{% if nb_demandes %}<i class="hub-pastille" aria-label="{{ nb_demandes }} en attente">{{ nb_demandes }}</i>{% endif %}</span>Demandes</a>
+  {% else %}
+  <a class="tab" href="/reglages" data-page="reglages"><span class="ti">{{ ic("gear", "s22") }}</span>Réglages</a>
+  {% endif %}
+  <button class="tab" type="button" data-encre-plus="encre-plus" aria-haspopup="dialog"><span class="ti">{{ ic("dots", "s22") }}</span>Plus</button>
+</nav>
+
+<template id="encre-plus">
+  <div class="q-tuiles plus-t">
+    {% if v and v.admin %}
+    <a class="qt" href="/admin/membres">{{ ic("users", "s22") }}Membres</a>
+    <a class="qt" href="/reglages">{{ ic("gear", "s22") }}Réglages</a>
+    {% endif %}
+    <a class="qt" href="{{ cfg.lien_mon_compte }}">{{ ic("user", "s22") }}Mon compte</a>
+    <a class="qt" href="/reglages#apparence">{{ ic("palette", "s22") }}Apparence</a>
+  </div>
+  <div class="liste-r" style="margin-top: 12px">
+    {% if v and v.admin %}
+    <a class="li" href="{{ cfg.lien_admin_authentik }}" target="_blank" rel="noopener"><span class="li-ic">{{ ic("shield") }}</span><span class="tx">Authentik<small>Utilisateurs, groupes, applications</small></span>{{ ic("external", "s18 muted") }}</a>
+    <a class="li" href="/admin/journal"><span class="li-ic">{{ ic("clock") }}</span><span class="tx">Journal<small>Qui a fait quoi</small></span>{{ ic("chev", "s18 muted") }}</a>
+    {% endif %}
+    <a class="li dn" href="/deconnexion"><span class="li-ic">{{ ic("logout") }}</span><span class="tx">Se déconnecter</span></a>
+  </div>
+</template>
+
+<script type="application/json" id="hub-raccourcis">{{ raccourcis|default([])|tojson }}</script>
+<script type="application/json" id="hub-contexte">{{ {"admin": v.admin if v else false, "lienCompte": cfg.lien_mon_compte, "lienAuthentik": cfg.lien_admin_authentik}|tojson }}</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

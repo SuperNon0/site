@@ -1,0 +1,124 @@
+/* hub.css : ce qui est propre au hub, posé sur les briques du kit « encre ».
+   Uniquement des jetons (var(--…)) : aucune couleur écrite en dur. */
+
+/* ---------------------------------------------------------------- marque */
+.marque { width: 30px; height: 30px; border-radius: 9px; background: var(--accent); color: var(--ink); display: grid; place-items: center; font: italic 400 22px/1 var(--f-title); flex: none; padding-bottom: 3px; }
+.marque.grand { width: 44px; height: 44px; border-radius: 12px; font-size: 32px; }
+:root[data-style="verre"] .marque { border-radius: 50%; background: radial-gradient(circle at 30% 25%, rgba(255, 255, 255, .55), transparent 55%), var(--accent); box-shadow: var(--v-reflet), 0 4px 14px color-mix(in srgb, var(--accent) 45%, transparent); }
+
+/* ---------------------------------------------------------------- accueil */
+.hub-filtre { margin: 0 0 14px; }
+.hub-groupe + .hub-groupe { margin-top: 4px; }
+.hub-groupe:first-child .sec-h { margin-top: 4px; }
+.hub-sites { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+@media (min-width: 560px) { .hub-sites { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .hub-sites { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; } }
+@media (min-width: 1600px) { .hub-sites { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+.hub-site {
+  display: flex; align-items: center; gap: 13px; min-width: 0; min-height: 72px;
+  padding: 12px 14px; color: var(--text);
+  background: var(--card); border: 1px solid var(--line); border-radius: var(--r-lg);
+  transition: transform .18s var(--ease), border-color .18s, box-shadow .18s;
+}
+.hub-site:hover { text-decoration: none; border-color: var(--acc-line); box-shadow: var(--shadow-s); }
+.hub-site:active { transform: scale(.98); }
+.hub-site:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hub-site .li-ic { width: 44px; height: 44px; border-radius: 12px; }
+.hub-site .li-ic svg.i { width: 22px; height: 22px; }
+.hub-site .tx { flex: 1; min-width: 0; }
+.hub-site .tx b { display: block; font-weight: 600; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hub-site .tx small { display: block; color: var(--muted); font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
+.hub-cadenas { color: var(--muted); display: grid; }
+:root[data-style="verre"] .hub-site {
+  background: var(--v-carte);
+  border: 1px solid var(--v-bord-bas); border-top-color: var(--v-bord-haut);
+  -webkit-backdrop-filter: var(--v-flou); backdrop-filter: var(--v-flou);
+  box-shadow: var(--v-reflet), var(--shadow-s);
+}
+:root[data-style="verre"] .hub-site .li-ic { border-radius: 50%; }
+
+.hub-bandeau { margin: 0 0 14px; color: var(--text); align-items: center; background: var(--acc-dim); border-color: var(--acc-line); }
+.hub-bandeau svg.i { color: var(--accent); margin-top: 0; }
+.hub-bandeau:hover { text-decoration: none; border-color: var(--acc-line); }
+.hub-bandeau > span { flex: 1; min-width: 0; }
+.hub-bandeau-err { margin: 0 0 14px; color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); background: var(--danger-dim); }
+.hub-bandeau-err > span { color: var(--text); }
+
+/* ---------------------------------------------------------------- listes admin */
+.page-h .esp { flex: 1; }
+.hub-li-site .hub-li-lien { color: var(--text); }
+.hub-li-site .hub-li-lien:hover { text-decoration: none; color: var(--accent); }
+.hub-etat { display: inline-flex; align-items: center; gap: 4px; font: 500 11.5px var(--f-mono); color: var(--muted); }
+.hub-etat.ok { color: var(--ok); }
+@media (max-width: 420px) { .hub-etat span { display: none; } }
+.hub-n { color: var(--accent) !important; font-weight: 600; }
+.ti { position: relative; }
+.hub-pastille {
+  position: absolute; top: -3px; right: -9px; min-width: 17px; height: 17px; padding: 0 4px;
+  border-radius: 99px; background: var(--accent); color: var(--ink);
+  font: 600 10px/17px var(--f-mono); font-style: normal; text-align: center;
+}
+.hub-filtres { margin: 0 0 14px; }
+.hub-demande { align-items: flex-start; flex-wrap: wrap; row-gap: 8px; }
+.hub-demande .li-ic { margin-top: 2px; }
+.hub-demande .tx { flex: 1 1 180px; }
+.hub-demande .hub-message { white-space: normal; color: var(--soft); font-style: italic; }
+.hub-boutons { display: flex; gap: 6px; align-items: center; margin-left: auto; }
+@media (max-width: 480px) {
+  .hub-demande .hub-boutons:has(.btn) { width: 100%; padding-left: 44px; }
+  .hub-demande .hub-boutons .okb { flex: 1; }
+  .hub-cache-tel { display: none; }
+}
+.hub-av {
+  width: 32px; height: 32px; border-radius: 50%; flex: none; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--accent), var(--prog)); color: var(--ink); font-weight: 700; font-size: 13px;
+}
+.hub-ib-vide { width: 40px; flex: none; }
+
+/* ---------------------------------------------------------------- formulaires */
+.hub-retour { margin: 0 0 6px -6px; }
+.hub-form { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 760px; }
+.hub-bloc { padding: 18px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.hub-bloc > [data-pour] { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.hub-bloc > [data-pour][hidden] { display: none; }
+.hub-bloc .reg-l { padding-top: 0; border-top: 0; }
+.hub-champ { min-width: 0; }
+.hub-aide { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.hub-err { font-size: 13px; color: var(--danger); margin: 6px 0 0; }
+.hub-champ.erreur .input { border-color: var(--danger); }
+.hub-deux { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+@media (min-width: 560px) { .hub-deux { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.hub-type { width: 100%; }
+.hub-type button { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.input.mono, textarea.mono { font-family: var(--f-mono); font-size: 14px; }
+@media (max-width: 640px) { .input.mono, textarea.mono { font-size: 16px; } }
+
+.hub-suffixe { display: flex; align-items: stretch; min-width: 0; border: 1px solid var(--line2); border-radius: 12px; background: var(--surface); overflow: hidden; transition: border-color .2s, box-shadow .2s; }
+.hub-suffixe:focus-within { border-color: var(--acc-line); box-shadow: 0 0 0 3px var(--acc-dim); }
+.hub-suffixe .input { border: 0; border-radius: 0; box-shadow: none !important; background: transparent; flex: 1; min-width: 0; }
+.hub-suffixe > span { display: flex; align-items: center; padding: 0 12px 0 2px; color: var(--muted); font: 500 13px var(--f-mono); white-space: nowrap; max-width: 55%; overflow: hidden; text-overflow: ellipsis; }
+.hub-suffixe.bouton { padding-right: 5px; align-items: center; }
+.hub-champ.erreur .hub-suffixe { border-color: var(--danger); }
+:root[data-style="verre"] .hub-suffixe { border-radius: 99px; padding-left: 6px; }
+
+.hub-icones { display: grid; grid-template-columns: repeat(auto-fill, minmax(44px, 1fr)); gap: 6px; }
+.hub-icone { height: 44px; border-radius: 12px; display: grid; place-items: center; color: var(--soft); background: var(--surface); border: 1px solid var(--line); transition: background .15s, color .15s, border-color .15s; }
+.hub-icone:hover { color: var(--text); border-color: var(--line2); }
+.hub-icone.on { background: var(--acc-dim); color: var(--accent); border-color: var(--acc-line); }
+:root[data-style="verre"] .hub-icone { border-radius: 50%; }
+
+.hub-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; position: sticky; bottom: calc(var(--tab-h) + 26px + env(safe-area-inset-bottom, 0px)); z-index: 5; padding: 10px; margin: 0 -10px; border-radius: var(--r-lg); background: var(--glass); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); }
+.hub-actions .esp { flex: 1; }
+@media (min-width: 1000px) { .hub-actions { bottom: 14px; } }
+@media (max-width: 420px) { .hub-actions .btn.gh { display: none; } }
+
+/* ---------------------------------------------------------------- pages publiques */
+.hub-simple { min-height: 100dvh; display: grid; place-items: center; align-content: center; gap: 14px; padding: calc(24px + env(safe-area-inset-top, 0px)) var(--pad, 16px) calc(24px + env(safe-area-inset-bottom, 0px)); }
+.hub-simple .login-card { width: 100%; }
+.hub-form-demande { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; text-align: left; }
+.hub-form-demande .btn.w { margin-top: 4px; }
+.hub-piege { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.hub-pied { font: 500 11.5px var(--f-mono); color: var(--muted); text-align: center; }
+.hub-pied a { color: var(--muted); }
+.login-card .bandeau-c { text-align: left; }

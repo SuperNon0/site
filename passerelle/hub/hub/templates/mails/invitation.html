@@ -1,0 +1,8 @@
+{% extends "mails/_base.html" %}
+{% block corps %}
+<p style="margin:0 0 12px;">Bonjour {{ demande.prenom }},</p>
+<p style="margin:0 0 20px;">Ta demande d'accès est acceptée. Il te reste à choisir ton mot de passe :</p>
+<p style="margin:0 0 22px;"><a href="{{ lien }}" style="display:inline-block;background:#a99bff;color:#120d2e;text-decoration:none;font-weight:700;padding:13px 22px;border-radius:10px;">Choisir mon mot de passe</a></p>
+<p style="margin:0 0 10px;color:#aab3c5;font-size:13.5px;">Le lien marche une seule fois, pendant {{ jours }} jours. Ensuite, tu pourras entrer avec ton e-mail ({{ demande.email }}) et ce mot de passe{% if demande.email.endswith('@gmail.com') %}, ou directement avec Google{% endif %}.</p>
+<p style="margin:0;color:#8a94aa;font-size:12.5px;">Si le bouton ne marche pas, copie cette adresse dans ton navigateur :<br><span style="word-break:break-all;">{{ lien }}</span></p>
+{% endblock %}

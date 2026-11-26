@@ -1,0 +1,9 @@
+{% extends "_simple.html" %}
+{% from "_macros.html" import ic %}
+{% block titre %}{{ titre }} · {{ cfg.NOM_SITE }}{% endblock %}
+{% block carte %}
+    <div class="access-icon {{ classe }}">{{ ic(icone) }}</div>
+    <h1 class="h-acces">{{ titre }}</h1>
+    <p class="access-text">{{ texte }}</p>
+    <a class="btn pri w" href="/">{{ ic("home", "s18") }}Retour à l'accueil</a>
+{% endblock %}
