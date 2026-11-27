@@ -19,6 +19,8 @@ Internet → Cloudflare → tunnel → cloudflared → Authentik (server:9000) �
 | `hub/hub/configurer.py` | configuration idempotente d'Authentik par son API |
 | `docs/brancher-un-projet.md` | brancher un projet : personnes, adresse locale, API, webhooks, MCP |
 | `docs/mcp-oauth.md` | MCP : le guichet OAuth de chaque site (modèle RecipeLog), à donner à Claude |
+| `prompts/nouveau-site.md` | prompt à copier : créer un nouveau site (design Encre & Verre + passerelle) |
+| `prompts/mettre-a-niveau.md` | prompt à copier : mettre un site existant à niveau |
 | `hub/hub/static/kit/` | le code prêt à copier (Python, TypeScript), le script de vérification, l'extrait de CLAUDE.md |
 | `docs/migrer-un-site.md` | brancher un site existant et retirer l'ancien Cloudflare Access |
 
