@@ -8,7 +8,9 @@ et notifications **BotPanel** intégrées.
 
 </div>
 
-> **Nouveau : [`passerelle/`](passerelle/)** — une seule connexion (Authentik) pour tous les sites, avec un hub sur le domaine principal. C'est elle qui remplace Cloudflare Access site par site.
+> **À utiliser maintenant : [`passerelle/`](passerelle/README.md)**, une seule connexion (Authentik) pour tous les sites `*.super-nono.cc`, avec un hub sur le domaine principal. Elle remplace Cloudflare Access site par site.
+> Guide d'installation, kit des projets, design Encre & Verre et prompts à copier (nouveau site, mise à niveau) : tout est dans [`passerelle/README.md`](passerelle/README.md).
+> Le « site-base » décrit ci-dessous (thème RecipeLog, Cloudflare Zero Trust) est l'ancienne fondation : ne l'utilise plus pour un nouveau projet.
 
 ---
 
