@@ -13,15 +13,15 @@ RÉFÉRENCES, dans le dépôt GitHub SuperNon0/site, branche main (ou claude/pas
 - passerelle/docs/brancher-un-projet.md : à lire en entier avant de commencer (personnes, adresse locale, API, comptes, groupes, pages publiques).
 - passerelle/docs/mcp-oauth.md : à lire en entier si le site a un MCP.
 - passerelle/hub/hub/static/kit/ : passerelle_auth.py, passerelle-auth.ts, exemple_comptes.py, CLAUDE-passerelle.md, verifier-site.sh.
-- passerelle/hub/hub/static/encre/ : le design (polices.css, polices/, encre.css, verre.css, encre.js, icones.svg).
+- passerelle/hub/hub/static/encre/ : le kit de design complet, version 1.1 (LISEZMOI.md, demo.html, modele.html, polices.css, polices/, encre.css, verre.css, encre.js, icones.svg, tailwind/).
 - passerelle/hub/hub/templates/ (_head.html, _base.html, reglages.html) et passerelle/hub/hub/static/hub.css : un site qui applique déjà tout ça, à prendre comme modèle.
 
 DESIGN
-1. Copie passerelle/hub/hub/static/encre/ dans un dossier design-encre/ du projet, sans le modifier. Si le dossier contient un LISEZMOI.md, lis-le en entier.
+1. Copie passerelle/hub/hub/static/encre/ dans un dossier design-encre/ du projet, sans le modifier. Lis design-encre/LISEZMOI.md en entier (surtout les sections 2, 6 bis, 7, 10 et 11), puis regarde demo.html et modele.html. Pour un site Next.js + Tailwind, suis la partie « Next.js + Tailwind » de la section 10 avec tailwind/encre-tailwind.css.
 2. Dans le <head> de chaque page, dans cet ordre : le petit script qui pose style, accent et thème avant l'affichage (copie celui de _head.html, clé localStorage « encre-apparence »), puis polices.css, encre.css, verre.css, la feuille propre au site, et encre.js en defer. Sur <html> : lang="fr", data-accent-defaut="lavande", data-style-defaut="encre".
 3. Structure comme _base.html : menu de gauche sur ordinateur, barre d'onglets flottante (.tabbar) sur téléphone, feuille « Plus », recherche rapide (Ctrl K).
 4. Une page Réglages → Apparence comme reglages.html : style Encre ou Verre, cinq couleurs d'accent, thème Automatique, Clair ou Sombre.
-5. Toutes les couleurs passent par les jetons de :root du kit : n'en invente aucune. Le CSS propre au site va dans sa propre feuille, avec les variantes :root[data-style="verre"] quand il faut. Jamais d'alert(), confirm() ou prompt() du navigateur : utilise les feuilles et confirmations d'encre.js.
+5. Coche la liste de la section 11 du LISEZMOI. Toutes les couleurs passent par les jetons de :root du kit : n'en invente aucune. Le CSS propre au site va dans sa propre feuille, avec les variantes :root[data-style="verre"] quand il faut. Jamais d'alert(), confirm() ou prompt() du navigateur : utilise les feuilles et confirmations d'encre.js.
 
 CONNEXION ET COMPTES
 6. Pas de page de connexion, pas de mot de passe, pas de Cloudflare Access : Authentik connecte les personnes avant le site. N'utilise pas l'ancien « site de base » (JWT Cloudflare, panel/).
