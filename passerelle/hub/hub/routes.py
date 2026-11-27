@@ -18,7 +18,7 @@ from .authentik import Authentik, AuthentikErreur
 from .botpanel import signature_valide
 from .db import get_db, journaliser
 from .identite import admin, connecte, visiteur
-from .sites import CHEMINS_PUBLICS_DEFAUT, ICONES, Site, Synchro, est_ip_privee, lire_formulaire
+from .sites import CHEMINS_PUBLICS_DEFAUT, ICONES, Site, Synchro, est_ip_privee, lire_formulaire, site_visible
 
 log = logging.getLogger(__name__)
 bp = Blueprint("hub", __name__)
@@ -193,9 +193,9 @@ def botpanel_decision():
 def accueil():
     v = visiteur()
     lignes = get_db().execute("SELECT * FROM sites ORDER BY categorie = '', categorie, ordre, nom").fetchall()
-    sites = [s for s in lignes if s["acces"] == "membres" or v.admin]
+    sites = [s for s in lignes if site_visible(s, v)]
     groupes = [(cat, list(items)) for cat, items in groupby(sites, key=lambda s: s["categorie"])]
-    return render_template("accueil.html", groupes=groupes, nb_sites=len(sites), page="accueil")
+    return render_template("accueil.html", groupes=groupes, nb_sites=len(sites), est_admin=v.admin, page="accueil")
 
 
 @bp.get("/reglages")
@@ -333,16 +333,16 @@ def _enregistrer_site(site_id: int | None):
         return json_err(str(exc), 502)
 
     valeurs = (s.nom, s.sous_domaine, s.cible, s.lien, s.description, s.icone, s.categorie, s.acces,
-               s.chemins_publics, s.type, s.ordre, prov, slug)
+               s.groupes, s.chemins_publics, s.type, s.ordre, prov, slug)
     if ancien:
         db.execute("UPDATE sites SET nom=?, sous_domaine=?, cible=?, lien=?, description=?, icone=?, categorie=?, "
-                   "acces=?, chemins_publics=?, type=?, ordre=?, ak_provider=?, ak_app_slug=? WHERE id=?",
+                   "acces=?, groupes=?, chemins_publics=?, type=?, ordre=?, ak_provider=?, ak_app_slug=? WHERE id=?",
                    (*valeurs, site_id))
         journaliser(_qui(), f"a modifié le site {s.nom}")
     else:
         cur = db.execute("INSERT INTO sites (nom, sous_domaine, cible, lien, description, icone, categorie, acces, "
-                         "chemins_publics, type, ordre, ak_provider, ak_app_slug) "
-                         "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", valeurs)
+                         "groupes, chemins_publics, type, ordre, ak_provider, ak_app_slug) "
+                         "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)", valeurs)
         site_id = cur.lastrowid
         journaliser(_qui(), f"a ajouté le site {s.nom}")
     db.commit()

@@ -155,7 +155,7 @@
         type: f.type.value, nom: f.nom.value, description: f.description.value,
         sous_domaine: f.sous_domaine.value, cible: f.cible.value, lien: f.lien.value,
         icone: f.icone.value, categorie: f.categorie.value, ordre: f.ordre.value,
-        acces: f.acces_admins.checked ? "admins" : "membres", chemins_publics: f.chemins_publics.value,
+        acces: f.acces_admins.checked ? "admins" : "membres", groupes: f.groupes.value, chemins_publics: f.chemins_publics.value,
       };
       Encre.occupe(bouton, async () => {
         try {

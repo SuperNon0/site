@@ -30,6 +30,12 @@ Ce site est publié derrière la passerelle de Noë (Authentik). Règles à resp
     (`admins` par défaut, `tous` ou un groupe), `PASSERELLE_MCP_FICHIER` (dossier sauvegardé).
   - Bouton « Déconnecter Claude » dans l'admin : `POST /api/mcp/oauth/deconnecter`.
   - Dans Claude : adresse `https://<site>.super-nono.cc/api/mcp`, Client ID et secret vides.
+- **Comptes** : un compte local par e-mail, créé à la première visite (modèle :
+  `exemple_comptes.py` du kit). Rôles et suspension dans le site ; qui peut
+  **entrer** se règle dans le hub (« Réservé à certains groupes »), pas dans l'app.
+- **Pages ouvertes à tous** (ex. salon de jeu par QR code, WebSocket) : chemins
+  publics déclarés dans le hub, aucune lecture d'identité Authentik dessus,
+  actions limitées, jamais d'action d'admin.
 - Lien « Se déconnecter » : `/outpost.goauthentik.io/sign_out`.
   Lien « Mon compte » : `https://auth.super-nono.cc/if/user/`.
 - Tout nouveau chemin public doit être ajouté dans le hub (Sites → le site →

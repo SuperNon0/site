@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS sites (
     icone           TEXT NOT NULL DEFAULT 'compass',
     categorie       TEXT NOT NULL DEFAULT '',
     acces           TEXT NOT NULL DEFAULT 'membres',   -- membres | admins
+    groupes         TEXT NOT NULL DEFAULT '',  -- "famille,amis" : réservé à ces groupes (et aux admins)
     chemins_publics TEXT NOT NULL DEFAULT '',  -- un chemin par ligne, ouverts sans connexion
     type            TEXT NOT NULL DEFAULT 'protege',   -- protege (Authentik) | lien (simple lien)
     ordre           INTEGER NOT NULL DEFAULT 0,
@@ -75,6 +76,9 @@ def fermer_db(_exc=None) -> None:
 def init_db() -> None:
     db = get_db()
     db.executescript(SCHEMA)
+    colonnes = {c["name"] for c in db.execute("PRAGMA table_info(sites)")}
+    if "groupes" not in colonnes:  # base créée avant l'accès par groupes
+        db.execute("ALTER TABLE sites ADD COLUMN groupes TEXT NOT NULL DEFAULT ''")
     db.commit()
 
 

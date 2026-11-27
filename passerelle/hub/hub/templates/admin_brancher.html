@@ -53,6 +53,11 @@
         <p>Ajoute le chemin dans <b>Sites → le site → Chemins ouverts sans connexion</b> (par exemple <code>/api/github</code>). Authentik laisse alors tout passer, sans rien vérifier : le site doit vérifier un jeton (<code>Authorization: Bearer</code>) ou une signature (<code>signature_valide()</code>, format BotPanel).</p>
         <p>Une machine ne peut pas utiliser une adresse protégée : Authentik lui répondrait par la page de connexion.</p>
       </div></details>
+      <details><summary>{{ ic("user") }}À savoir : comptes et groupes{{ ic("chev", "s18 chev") }}</summary><div class="rep">
+        <p><b>Plusieurs comptes :</b> le site reconnaît chaque personne par son e-mail (<code>utilisateur().email</code>) et crée son compte à la première visite. Rôles, compte suspendu et données de chacun restent dans le site. Exemple prêt à copier : <code>exemple_comptes.py</code> ci-dessous.</p>
+        <p><b>Un compte sur certains sites seulement :</b> Sites → le site → « Réservé à certains groupes » (ex. <code>famille</code>). Crée d'abord le groupe dans Authentik et mets-y les personnes. Champ vide = tout compte accepté entre : mets un groupe sur les sites sensibles. Le hub ne montre à chacun que ses sites.</p>
+        <p><b>Pages ouvertes à tous</b> (ex. salons de jeu par QR code) : ajoute leurs chemins aux chemins ouverts sans connexion (<code>/salon</code>, <code>/ws</code> ou <code>/socket.io</code>, <code>/static</code>). Les WebSockets passent. Le panel admin reste protégé.</p>
+      </div></details>
       <details open><summary>{{ ic("plug") }}Claude, par un connecteur MCP{{ ic("chev", "s18 chev") }}</summary><div class="rep">
         <p>Dans Claude : Paramètres → Connecteurs → Ajouter, colle <code>https://{{ ex }}/api/mcp</code>, laisse <b>Client ID et secret vides</b>, puis <b>Se connecter</b>. Tu passes par la connexion de la passerelle, puis le site demande « Autoriser Claude ? ». Ni en-tête, ni jeton à copier.</p>
         <p>Claude Code : <code>claude mcp add --transport http nom https://{{ ex }}/api/mcp</code>, puis <code>/mcp</code> → Authenticate.</p>
@@ -67,6 +72,7 @@
     <div class="liste-r">
       <a class="li" href="{{ url_for('static', filename='kit/passerelle_auth.py') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">passerelle_auth.py<small>Python, Flask ou autre : personnes, jetons, signatures</small></span></a>
       <a class="li" href="{{ url_for('static', filename='kit/passerelle-auth.ts') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">passerelle-auth.ts<small>Node et TypeScript : Next.js, Express…</small></span></a>
+      <a class="li" href="{{ url_for('static', filename='kit/exemple_comptes.py') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">exemple_comptes.py<small>Exemple : un compte par personne, rôles depuis les groupes, compte suspendu</small></span></a>
       <a class="li" href="{{ url_for('static', filename='kit/CLAUDE-passerelle.md') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">CLAUDE-passerelle.md<small>À coller dans le CLAUDE.md du projet : Claude saura le brancher</small></span></a>
       <a class="li" href="{{ url_for('static', filename='kit/verifier-site.sh') }}" download><span class="li-ic">{{ ic("download") }}</span><span class="tx">verifier-site.sh<small>Vérifie un site branché, depuis la passerelle</small></span></a>
     </div>

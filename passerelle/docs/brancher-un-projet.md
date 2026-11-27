@@ -199,6 +199,87 @@ def mcp():
    `PASSERELLE_MCP_SECRET=` (`openssl rand -hex 32`), et si besoin
    `PASSERELLE_MCP_POUR=tous` (par défaut seuls les admins peuvent brancher Claude).
 
+## À savoir : comptes, groupes et pages ouvertes à tous
+
+### Plusieurs comptes dans un site
+
+Oui, chaque personne a son compte. Authentik connecte la personne, le site la
+reconnaît par son **e-mail** (`utilisateur().email`) et crée son compte local à
+la première visite. Rien à inscrire à la main, pas de mot de passe dans le site.
+
+Exemple prêt à copier : [`exemple_comptes.py`](../hub/hub/static/kit/exemple_comptes.py)
+(Flask + SQLite) :
+
+- table `comptes` (e-mail, nom, rôle, actif) créée ou mise à jour à chaque visite ;
+- `@compte_requis` et `@role_requis("animateur")` sur les routes ;
+- le rôle vient des groupes Authentik (`ROLES_PAR_GROUPE`, ex. groupe
+  `jeu-animateurs` → rôle `animateur` ; « authentik Admins » → `admin`) : changer
+  quelqu'un de groupe dans Authentik suffit. Si tu préfères gérer les rôles dans
+  le site, enlève la mise à jour du rôle et garde celui de la table ;
+- `actif = 0` suspend quelqu'un **dans ce site seulement** ;
+- Claude (MCP) agit au nom du compte qui a cliqué « Autoriser », avec les mêmes
+  droits, et est coupé si le compte est suspendu (`regle_mcp`).
+
+En TypeScript, même idée :
+
+```ts
+const u = lireUtilisateur(req.headers);            // ou a.utilisateur avec accesMcp
+if (!u) return new Response("Connexion requise", { status: 401 });
+const compte = await db.compte.upsert({
+  where: { email: u.email.toLowerCase() },
+  create: { email: u.email.toLowerCase(), nom: u.nom, role: u.admin ? "admin" : "membre" },
+  update: { nom: u.nom, vuLe: new Date() },
+});
+if (!compte.actif) return new Response("Compte suspendu", { status: 403 });
+```
+
+Les données de chacun se rangent avec `compte_id`. Bibliothèque **partagée** ou
+**séparée par compte** : à décider projet par projet.
+
+### Un compte qui n'entre que sur certains sites
+
+Dans le hub : Sites → le site → **« Réservé à certains groupes »** (ex.
+`famille, amis`). Le hub pose la règle dans Authentik : seuls ces groupes (et
+les admins) peuvent ouvrir le site, et le hub ne montre à chacun que les sites
+qu'il peut ouvrir. Il faut d'abord créer le groupe dans Authentik (Annuaire →
+Groupes) et y mettre les personnes.
+
+- Champ vide = **tout compte accepté** entre. Pour un site sensible, mets un
+  groupe ou « Réservé aux administrateurs ».
+- Une règle sur une personne précise, posée à la main dans Authentik (Applications
+  → le site → Policy / Group / User Bindings), est gardée par le hub.
+- Le site peut en plus refuser quelqu'un lui-même (compte suspendu).
+
+### Un site avec des pages ouvertes à tous (ex. jeu avec salons par QR code)
+
+Ça marche. Exemple : un site de jeu, panel admin protégé, salons rejoints par
+QR code sans compte.
+
+1. Dans le hub, chemins ouverts sans connexion du site jeu :
+   ```
+   /salon
+   /ws
+   /static
+   ```
+   (adapte aux vrais chemins : les pages du salon, le WebSocket, par exemple
+   `/socket.io`, et les fichiers CSS/JS/images que ces pages chargent).
+2. Le QR code pointe vers `https://jeu.super-nono.cc/salon/<code>` : les
+   joueurs entrent directement, sans page de connexion.
+3. Tout le reste (`/`, `/admin`, la création de salons) passe par Authentik.
+   Dans le code : `@admin_requis` (ou `@role_requis`) sur le panel, et **aucune**
+   vérification de compte sur `/salon` et `/ws`.
+
+Les **WebSockets** passent par la passerelle (testé : connexion acceptée sur un
+chemin public, renvoyée vers la connexion sur un chemin protégé). Sur un chemin
+protégé, le WebSocket marche pour une personne connectée, car le navigateur
+envoie son cookie.
+
+Sur un chemin public, ne fais jamais confiance aux en-têtes `X-Authentik-*`
+(n'importe qui peut les inventer) : le kit les ignore sans la clé. Un joueur
+anonyme se reconnaît par ce que le site lui donne (code du salon, pseudo, jeton
+de joueur en cookie), pas par la passerelle. Pense à limiter ce qu'un salon
+public peut faire (pas d'action d'admin, taille des messages, nombre de joueurs).
+
 ## 5. Un nouveau projet, du début à la fin
 
 1. L'app écoute sur `0.0.0.0:<port>` dans son LXC. Pas de Cloudflare, pas de page de connexion.
