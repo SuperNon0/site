@@ -325,8 +325,8 @@ docker compose up -d</pre><button class="copier" type="button">Copier</button></
       <tr><td>Nom</td><td>ce qui s'affiche sur le bouton</td></tr>
       <tr><td>Sous-domaine</td><td><code>recettes</code> pour <code>recettes.super-nono.cc</code></td></tr>
       <tr><td>Adresse</td><td>l'IP et le port du LXC, par exemple <code>192.168.1.60:3000</code> (bouton <span class="chemin">Tester</span> pour vérifier)</td></tr>
-      <tr><td>Accès</td><td>« Membres » ou « Admins seulement »</td></tr>
-      <tr><td>Chemins publics</td><td><code>/api/notify</code> et <code>/mcp</code> par défaut : ils restent joignables sans connexion</td></tr>
+      <tr><td>Accès</td><td>« Membres » ou « Admins seulement », ou <b>Réservé à certains groupes</b> (ex. <code>famille</code>) : crée d'abord le groupe dans Authentik (<span class="chemin">Annuaire → Groupes</span>) et mets-y les personnes. Le hub ne montre à chacun que les sites qu'il peut ouvrir</td></tr>
+      <tr><td>Chemins publics</td><td><code>/api/notify</code> et les adresses du guichet MCP (<code>/api/mcp$</code>, <code>/api/mcp/oauth/inscription</code>, <code>/api/mcp/oauth/jeton</code>, les deux <code>/.well-known/oauth-…</code>) par défaut : joignables sans passer par la page de connexion. Un <code>$</code> final veut dire « ce chemin exactement ». La page « Autoriser Claude ? » reste derrière la connexion.</td></tr>
     </table></div>
     <p>Le hub crée tout seul la protection dans Authentik. Un site peut aussi être un simple lien externe.</p></div></div>
 
@@ -335,7 +335,7 @@ docker compose up -d</pre><button class="copier" type="button">Copier</button></
     <p class="note att"><b>Une seule fois, avant tout :</b> <span class="chemin">Centre de données → Pare-feu</span> → ajoute deux règles « Entrée, ACCEPT » depuis ton réseau (source <code>192.168.1.0/24</code>), ports <code>8006</code> et <code>22</code>. Ensuite seulement <span class="chemin">Options → Pare-feu : Oui</span>. Sinon tu risques de perdre l'accès à Proxmox.</p>
     <p>Puis pour chaque LXC de site :</p><ol>
       <li>Le CT → <span class="chemin">Pare-feu → Ajouter</span> : Entrée, ACCEPT, source <code>192.168.1.40</code> (IP de la passerelle), port de destination = port du site.</li>
-      <li>Ajoute aussi SSH depuis ton réseau, et les machines qui appellent le site en direct (par exemple Home Assistant vers BotPanel).</li>
+      <li>Ajoute aussi SSH depuis ton réseau, et les machines qui appellent le site en direct sur son adresse locale. <b>BotPanel en premier</b> : tous tes sites lui envoient leurs notifications, donc autorise leurs IP (ou tout ton réseau) sur son port. Le hub explique tout ça dans <span class="chemin">Plus → Brancher un projet</span>.</li>
       <li><span class="chemin">Pare-feu → Options</span> : Pare-feu <b>Oui</b>, politique d'entrée <b>DROP</b>.</li>
       <li>Vérifie : le site marche par <code>https://…super-nono.cc</code>, mais plus en tapant son IP depuis ton PC.</li>
     </ol></div></div>
@@ -377,6 +377,13 @@ apt remove -y cloudflared</pre><button class="copier" type="button">Copier</butt
     <div class="etape-corps">
     <div class="cmd"><pre>cd /opt/site/passerelle && ./mettre-a-jour.sh</pre><button class="copier" type="button">Copier</button></div>
     <p>Sauvegarde la base d'Authentik (les 7 dernières dans <code>data/sauvegardes/</code>), récupère le nouveau code, redémarre et reconfigure. Le numéro de version est visible dans <span class="chemin">Réglages</span>.</p></div></div>
+
+  <div class="etape" data-id="q-savoir"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>À savoir : comptes, groupes, pages ouvertes à tous</h3></div>
+    <div class="etape-corps"><ul>
+      <li><b>Plusieurs comptes :</b> chaque personne a son compte dans chaque site, reconnu par son e-mail et créé à sa première visite. Pas de mot de passe dans les sites (exemple pour les projets : <code>exemple_comptes.py</code> dans <span class="chemin">Plus → Brancher un projet</span>).</li>
+      <li><b>Un compte sur certains sites seulement :</b> mets la personne dans un groupe Authentik, puis réserve les sites à ce groupe dans le hub. Sans groupe, tout compte accepté entre : mets-en un sur les sites sensibles.</li>
+      <li><b>Pages ouvertes à tous</b> (ex. salons de jeu rejoints par QR code) : ajoute leurs chemins aux chemins publics du site (<code>/salon</code>, <code>/ws</code>, <code>/static</code>…). Les WebSockets passent, le panel admin reste protégé.</li>
+    </ul></div></div>
 
   <div class="etape" data-id="q-sauve"><div class="etape-tete"><button class="case" type="button" aria-label="Fait"></button><h3>Programmer une sauvegarde du LXC</h3></div>
     <div class="etape-corps"><p>Proxmox → <span class="chemin">Centre de données → Sauvegarde → Ajouter</span> : le CT <code>passerelle</code>, chaque semaine, mode instantané. Tout ce qui compte est dans <code>/opt/site/passerelle/data</code> et <code>.env</code>.</p></div></div>

@@ -72,6 +72,7 @@ SLUG_GOOGLE_INCONNU = "hub-google-sans-compte"
 
 
 
+
 def etape(texte: str) -> None:
     print(f"\n→ {texte}", flush=True)
 
@@ -335,7 +336,7 @@ class Configurateur:
             "internal_host_ssl_validation": False, "skip_path_regex": SKIP_HUB,
             "property_mappings": mappings, "access_token_validity": self.cfg.DUREE_SESSION,
         })
-        app = self.assurer("/core/applications/", {"slug": "hub"}, {
+        app = self.assurer("/core/applications/", {"slug": "hub", "superuser_full_list": True}, {
             "name": "Hub", "slug": "hub", "provider": prov["pk"], "meta_launch_url": self.cfg.HUB_URL,
             "meta_description": "Tous les sites", "policy_engine_mode": "any",
         }, cle="slug")

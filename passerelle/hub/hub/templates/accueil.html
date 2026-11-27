@@ -19,7 +19,8 @@
       <a class="hub-site" href="{{ s.lien }}" data-nom="{{ (s.nom ~ ' ' ~ s.description ~ ' ' ~ s.sous_domaine)|lower }}">
         <span class="li-ic acc">{{ ic(s.icone) }}</span>
         <span class="tx"><b>{{ s.nom }}</b><small>{{ s.description or s.lien.split('//')[-1] }}</small></span>
-        {% if s.acces == "admins" %}<span class="hub-cadenas" title="Visible seulement par les administrateurs">{{ ic("lock", "s16") }}</span>{% endif %}
+        {% if s.acces == "admins" %}<span class="hub-cadenas" title="Visible seulement par les administrateurs">{{ ic("lock", "s16") }}</span>
+        {% elif s.groupes and est_admin %}<span class="hub-cadenas" title="Réservé à : {{ s.groupes }}">{{ ic("lock", "s16") }}</span>{% endif %}
       </a>
       {% endfor %}
     </div>

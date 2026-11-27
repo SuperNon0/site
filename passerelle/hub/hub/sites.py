@@ -24,7 +24,10 @@ SKIP_HUB = "\n".join([
     r"^/sante$",
 ])
 
-CHEMINS_PUBLICS_DEFAUT = "/api/notify\n/mcp"
+# Le MCP et son guichet OAuth (docs/mcp-oauth.md). « $ » à la fin = ce chemin exactement, sans ce qui est dessous :
+# /api/mcp/oauth/autoriser reste derrière Authentik, c'est là que la personne se connecte.
+CHEMINS_PUBLICS_DEFAUT = ("/api/notify\n/api/mcp$\n/api/mcp/oauth/inscription\n/api/mcp/oauth/jeton\n"
+                          "/.well-known/oauth-protected-resource\n/.well-known/oauth-authorization-server")
 
 SOUS_DOMAINES_RESERVES = {"auth", "www", "hub"}
 
@@ -57,6 +60,7 @@ class Site:
     icone: str = "compass"
     categorie: str = ""
     acces: str = "membres"
+    groupes: str = ""          # « famille,amis » : réservé à ces groupes Authentik (et aux admins)
     chemins_publics: str = CHEMINS_PUBLICS_DEFAUT
     type: str = "protege"
     ordre: int = 0
@@ -66,7 +70,31 @@ class Site:
     def depuis_ligne(cls, ligne) -> "Site":
         return cls(**{k: ligne[k] for k in (
             "nom", "sous_domaine", "cible", "lien", "description", "icone",
-            "categorie", "acces", "chemins_publics", "type", "ordre")})
+            "categorie", "acces", "groupes", "chemins_publics", "type", "ordre")})
+
+    @property
+    def liste_groupes(self) -> list[str]:
+        return liste_groupes(self.groupes)
+
+
+def liste_groupes(texte: str) -> list[str]:
+    """« famille, amis » → ["famille", "amis"] (sans doublons, dans l'ordre)."""
+    vus: list[str] = []
+    for g in re.split(r"[,\n]", texte or ""):
+        g = g.strip()
+        if g and g not in vus:
+            vus.append(g)
+    return vus
+
+
+def site_visible(ligne, v) -> bool:
+    """Le hub ne montre à chacun que les sites qu'Authentik le laissera ouvrir."""
+    if v.admin:
+        return True
+    if ligne["acces"] == "admins":
+        return False
+    groupes = liste_groupes(ligne["groupes"])
+    return not groupes or any(g in v.groupes for g in groupes)
 
 
 def normaliser_cible(texte: str) -> str | None:
@@ -92,6 +120,7 @@ def lire_formulaire(form, domaine: str) -> Site:
         icone=(form.get("icone") or "compass").strip(),
         categorie=(form.get("categorie") or "").strip()[:40],
         acces="admins" if form.get("acces") == "admins" else "membres",
+        groupes=(form.get("groupes") or "").strip(),
         chemins_publics=(form.get("chemins_publics") or "").strip(),
         type="lien" if form.get("type") == "lien" else "protege",
     )
@@ -103,6 +132,13 @@ def lire_formulaire(form, domaine: str) -> Site:
         s.erreurs["nom"] = "Donne un nom au site."
     if s.icone not in ICONES:
         s.icone = "compass"
+
+    groupes = liste_groupes(s.groupes)
+    if s.acces == "admins":
+        groupes = []
+    elif len(groupes) > 10 or any(len(g) > 60 or "|" in g for g in groupes):
+        s.erreurs["groupes"] = "Jusqu'à 10 noms de groupes, séparés par des virgules (ex. : famille, amis)."
+    s.groupes = ", ".join(groupes)
 
     if s.type == "protege":
         if not RE_SOUS_DOMAINE.match(s.sous_domaine):
@@ -123,13 +159,14 @@ def lire_formulaire(form, domaine: str) -> Site:
             ligne = ligne.strip()
             if not ligne:
                 continue
-            if not ligne.startswith("/") or " " in ligne:
-                s.erreurs["chemins_publics"] = "Un chemin par ligne, qui commence par « / » (ex. : /api/notify)."
+            if not ligne.startswith("/") or " " in ligne or "$" in ligne[:-1]:
+                s.erreurs["chemins_publics"] = "Un chemin par ligne, qui commence par « / » (ex. : /api/notify, ou /api/mcp$ pour ce chemin seul)."
                 break
             chemins.append(ligne)
         s.chemins_publics = "\n".join(chemins)
     else:
-        s.cible, s.chemins_publics, s.acces = "", "", "membres"
+        s.cible, s.chemins_publics, s.acces, s.groupes = "", "", "membres", ""
+        s.erreurs.pop("groupes", None)
         if not re.match(r"^https?://[^\s]+$", s.lien):
             s.erreurs["lien"] = "Écris une adresse complète, qui commence par https://"
         s.sous_domaine = s.sous_domaine or ""
@@ -137,12 +174,17 @@ def lire_formulaire(form, domaine: str) -> Site:
 
 
 def regex_chemins(chemins_publics: str) -> str:
-    """« /api/notify » → « ^/api/notify(/.*)?$ » (le chemin et tout ce qui est dessous)."""
+    """« /api/notify » → « ^/api/notify(/.*)?$ » (le chemin et tout ce qui est dessous).
+
+    « /api/mcp$ » → « ^/api/mcp$ » (ce chemin seulement).
+    """
     lignes = []
     for ch in (chemins_publics or "").splitlines():
-        ch = ch.strip().rstrip("/")
+        ch = ch.strip()
+        exact = ch.endswith("$")
+        ch = ch.rstrip("$").rstrip("/")
         if ch:
-            lignes.append("^" + re.escape(ch) + "(/.*)?$")
+            lignes.append("^" + re.escape(ch) + ("$" if exact else "(/.*)?$"))
     return "\n".join(lignes)
 
 
@@ -214,19 +256,33 @@ class Synchro:
             "open_in_new_tab": False,
         }
 
-    def _regle_admins(self, app_pk: str, admins: bool) -> None:
+    def _regles(self, app_pk: str, s: Site) -> None:
+        """Qui peut ouvrir le site, en règles de groupe sur l'application Authentik.
+
+        Aucune règle de groupe = tout compte connecté entre. « admins » = le groupe des admins.
+        Des groupes = ces groupes ET les admins. Les groupes doivent déjà exister dans
+        Authentik (le compte « hub » n'a pas le droit d'en créer). Les règles sur une
+        personne précise, posées à la main dans Authentik, ne sont pas touchées.
+        """
+        voulus = [self.groupe_admins] if s.acces == "admins" else (
+            [self.groupe_admins, *s.liste_groupes] if s.liste_groupes else [])
+        pks = []
+        for nom in voulus:
+            g = self.ak.groupe(nom)
+            if not g:
+                raise AuthentikErreur(f"Groupe « {nom} » introuvable dans Authentik : crée-le d'abord "
+                                      "(Authentik → Annuaire → Groupes), avec exactement ce nom.", 422)
+            pks.append(g["pk"])
         liens = [b for b in self.ak.liste("/policies/bindings/", target=app_pk) if b["target"] == app_pk]
-        groupe = self.ak.groupe(self.groupe_admins)
-        if not groupe:
-            raise AuthentikErreur(f"Groupe « {self.groupe_admins} » introuvable dans Authentik.")
-        deja = [b for b in liens if b.get("group") == groupe["pk"]]
-        if admins and not deja:
-            self.ak.post("/policies/bindings/", {
-                "target": app_pk, "group": groupe["pk"], "order": 0, "enabled": True,
-                "negate": False, "timeout": 30,
-            })
-        if not admins:
-            for b in deja:
+        presents = {b["group"] for b in liens if b.get("group")}
+        for ordre, pk in enumerate(pks):
+            if pk not in presents:
+                self.ak.post("/policies/bindings/", {
+                    "target": app_pk, "group": pk, "order": ordre, "enabled": True,
+                    "negate": False, "timeout": 30,
+                })
+        for b in liens:
+            if b.get("group") and b["group"] not in pks:
                 self.ak.delete(f"/policies/bindings/{b['pk']}/")
 
     def creer(self, s: Site) -> tuple[int, str]:
@@ -238,7 +294,7 @@ class Synchro:
             }
             provider = self.ak.post("/providers/proxy/", donnees)
             app = self.ak.post("/core/applications/", self._app_donnees(s, provider["pk"]))
-            self._regle_admins(app["pk"], s.acces == "admins")
+            self._regles(app["pk"], s)
             self.ak.avant_poste_ajouter(provider["pk"])
             return provider["pk"], app["slug"]
         except AuthentikErreur:
@@ -263,7 +319,7 @@ class Synchro:
                     raise
         if app is None:
             app = self.ak.post("/core/applications/", self._app_donnees(s, ancien_provider))
-        self._regle_admins(app["pk"], s.acces == "admins")
+        self._regles(app["pk"], s)
         self.ak.avant_poste_ajouter(ancien_provider)
         return ancien_provider, nouveau_slug
 

@@ -30,6 +30,7 @@
     <div class="side-lbl">Authentik</div>
     <div class="side-listes">
       <a class="side-it" href="{{ cfg.lien_admin_authentik }}" target="_blank" rel="noopener">{{ ic("shield") }}<span class="nom">Utilisateurs et groupes</span>{{ ic("external", "s16 muted") }}</a>
+      <a class="side-it" href="/admin/brancher" data-page="brancher">{{ ic("plug") }}<span class="nom">Brancher un projet</span></a>
       <a class="side-it" href="/admin/journal" data-page="journal">{{ ic("clock") }}<span class="nom">Journal</span></a>
     </div>
     {% endif %}
@@ -81,6 +82,7 @@
   <div class="liste-r" style="margin-top: 12px">
     {% if v and v.admin %}
     <a class="li" href="{{ cfg.lien_admin_authentik }}" target="_blank" rel="noopener"><span class="li-ic">{{ ic("shield") }}</span><span class="tx">Authentik<small>Utilisateurs, groupes, applications</small></span>{{ ic("external", "s18 muted") }}</a>
+    <a class="li" href="/admin/brancher"><span class="li-ic">{{ ic("plug") }}</span><span class="tx">Brancher un projet<small>Clé, jetons, code pour tes sites</small></span>{{ ic("chev", "s18 muted") }}</a>
     <a class="li" href="/admin/journal"><span class="li-ic">{{ ic("clock") }}</span><span class="tx">Journal<small>Qui a fait quoi</small></span>{{ ic("chev", "s18 muted") }}</a>
     {% endif %}
     <a class="li dn" href="/deconnexion"><span class="li-ic">{{ ic("logout") }}</span><span class="tx">Se déconnecter</span></a>

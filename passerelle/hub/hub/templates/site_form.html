@@ -57,10 +57,11 @@
   <section class="carte hub-bloc" data-pour="protege">
     <div class="lbl-mono">Accès</div>
     <div class="reg-l"><div class="tx"><b>Réservé aux administrateurs</b><span>Sinon, tous les membres acceptés peuvent l'ouvrir.</span></div><input type="checkbox" class="sw" name="acces_admins" {{ 'checked' if site.acces == 'admins' }} aria-label="Réservé aux administrateurs"></div>
+    {{ champ("groupes", "Réservé à certains groupes (facultatif)", site.groupes, placeholder="Ex. : famille, amis", aide="Seuls ces groupes Authentik (et les admins) pourront ouvrir le site, et le verront dans le hub. Crée d'abord le groupe dans Authentik (Annuaire → Groupes) et mets-y les personnes. Vide = tous les membres.", attrs='maxlength="300" autocomplete="off"') }}
     <div class="hub-champ" data-champ="chemins_publics">
       <label class="lbl" for="f-chemins_publics">Chemins ouverts sans connexion <button type="button" class="q" aria-label="Explication" data-t="Chemins ouverts sans connexion" data-d="Pour les appels de machines (Home Assistant, Claude, Proxmox…) qui ne peuvent pas se connecter. Exemple : /api/notify ouvre /api/notify et tout ce qui est dessous. Laisse vide si le site n'en a pas besoin.">?</button></label>
-      <textarea class="input mono" id="f-chemins_publics" name="chemins_publics" rows="3" placeholder="/api/notify&#10;/mcp" spellcheck="false">{{ site.chemins_publics }}</textarea>
-      <p class="hub-aide">Un chemin par ligne. Par défaut : /api/notify et /mcp.</p>
+      <textarea class="input mono" id="f-chemins_publics" name="chemins_publics" rows="6" placeholder="/api/notify&#10;/api/mcp$" spellcheck="false">{{ site.chemins_publics }}</textarea>
+      <p class="hub-aide">Un chemin par ligne : il ouvre aussi tout ce qui est dessous, sauf s'il finit par « $ ». Par défaut : /api/notify et le MCP avec sa connexion Claude (/api/mcp, son inscription, son jeton et ses deux fiches /.well-known).</p>
       <p class="hub-err" hidden></p>
     </div>
   </section>

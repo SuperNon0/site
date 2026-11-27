@@ -122,3 +122,16 @@
 .hub-pied { font: 500 11.5px var(--f-mono); color: var(--muted); text-align: center; }
 .hub-pied a { color: var(--muted); }
 .login-card .bandeau-c { text-align: left; }
+
+/* Brancher un projet */
+.hub-brancher { display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; max-width: 760px; }
+.hub-brancher .sec-t { margin: 0; }
+.hub-brancher .faq-g { margin-top: 4px; }
+.hub-brancher .rep p + p { margin-top: 8px; }
+.hub-jeton-l { display: flex; gap: 8px; align-items: center; }
+.hub-jeton-l .input { flex: 1; min-width: 0; }
+.hub-cle { flex-wrap: wrap; }
+.hub-cle code { flex-basis: 100%; padding: 4px 0 2px; }
+#jeton-res { display: grid; gap: 0; }
+#jeton-res[hidden] { display: none; }
+#jeton-res .reg-l { border-top: 0; padding-bottom: 0; min-height: 0; padding-top: 14px; }

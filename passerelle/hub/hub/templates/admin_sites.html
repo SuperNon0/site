@@ -25,7 +25,8 @@
       {% elif etat.get(s.ak_provider) %}<span class="hub-etat ok" title="En place dans Authentik">{{ ic("check", "s16") }}<span>Actif</span></span>
       {% else %}<button type="button" class="btn xs dn" data-reparer="{{ s.id }}" title="Absent d'Authentik : le remettre">{{ ic("refresh", "s16") }}Réparer</button>
       {% endif %}
-      {% if s.acces == "admins" %}<span class="hub-etat" title="Réservé aux administrateurs">{{ ic("lock", "s16") }}</span>{% endif %}
+      {% if s.acces == "admins" %}<span class="hub-etat" title="Réservé aux administrateurs">{{ ic("lock", "s16") }}</span>
+      {% elif s.groupes %}<span class="hub-etat" title="Réservé à : {{ s.groupes }} (et aux admins)">{{ ic("lock", "s16") }}<span>{{ s.groupes }}</span></span>{% endif %}
     </span>
     <button type="button" class="ib" data-menu-site="{{ s.id }}" aria-label="Actions pour {{ s.nom }}">{{ ic("dots", "s18") }}</button>
   </div>

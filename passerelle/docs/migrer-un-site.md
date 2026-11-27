@@ -12,7 +12,7 @@ Authentik ajoute alors à chaque requête :
 | `X-Authentik-Groups` | ses groupes, séparés par `\|` |
 | `X-Passerelle-Cle` | le secret `PASSERELLE_CLE` du `.env` de la passerelle |
 
-> Sur les chemins publics (`/api/notify`, `/mcp`…), Authentik laisse passer la
+> Sur les chemins publics (`/api/notify`, `/api/mcp`…), Authentik laisse passer la
 > requête **telle quelle** : n'importe qui peut alors inventer un en-tête
 > `X-Authentik-Email`. Un site ne doit donc croire `X-Authentik-Email` **que si**
 > `X-Passerelle-Cle` est présent et correct.
